@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17130e">
+<title>Solo Limpo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: fliperama de tela única; menu em duas colunas no PC, uma coluna no celular; jogo = HUD + palco 16:9 + controles de toque */
+:root{
+  --solo:#17130e; --solo-2:#211b14; --solo-3:#2c241a; --linha:#41372a;
+  --texto:#f2ead7; --apagado:#ab9f88;
+  --folha:#86c95a; --folha-esc:#3f7a2e; --cadmio:#f0c03a; --chumbo:#8796ab;
+  --toxico:#c457d6; --perigo:#e0573f; --agua:#4a90d9; --laranja:#e8913a;
+  --display:"Pixelify Sans", ui-monospace, "Courier New", monospace;
+  --corpo:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--solo);
+  background-image:radial-gradient(circle at 20% 110%, rgba(196,87,214,.10), transparent 45%),
+                   radial-gradient(circle at 90% -10%, rgba(134,201,90,.08), transparent 40%);
+  color:var(--texto); font:16px/1.45 var(--corpo);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+  overflow:hidden; -webkit-user-select:none; user-select:none; touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+[hidden]{display:none!important}
+body.toque .so-pc{display:none!important}
+body:not(.toque) .so-toque{display:none!important}
+#app{height:100%;max-width:1180px;margin:0 auto;display:flex;flex-direction:column}
+.tela{flex:1;min-height:0;display:flex;flex-direction:column}
+.rolavel{overflow-y:auto;overflow-x:hidden;padding-block:20px 28px}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;line-height:1.05}
+p{margin:0}
+.eyebrow{font-family:var(--display);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--apagado)}
+.num{font-variant-numeric:tabular-nums}
+
+/* Botões */
+.btn{
+  font:700 1rem/1 var(--display); letter-spacing:.04em; color:var(--texto);
+  background:var(--solo-3); border:2px solid var(--linha); border-radius:6px;
+  padding:14px 18px; box-shadow:0 4px 0 #0d0a07; cursor:pointer; text-align:center;
+  transition:transform .08s, border-color .12s, background .12s;
+}
+.btn:hover{border-color:var(--apagado)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0d0a07}
+.btn.primario{background:var(--folha);border-color:var(--folha);color:#12210b}
+.btn:focus-visible,.carta:focus-visible,.op:focus-visible,.aba:focus-visible{outline:3px solid var(--cadmio);outline-offset:3px}
+.linha-botoes{display:flex;flex-wrap:wrap;gap:12px}
+
+/* Teclas de controle */
+.k{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;padding:0 .35em;border-radius:999px;font:700 .85rem/1 var(--display);vertical-align:middle}
+.k-a{background:#3d9a3a;color:#fff}.k-b{background:#c7372f;color:#fff}
+.k-d{background:var(--solo-3);border:2px solid var(--linha);border-radius:5px;color:var(--texto)}
+
+/* MENU */
+.menu-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:start}
+.marca h1{font-size:clamp(3rem,9vw,5.6rem);letter-spacing:.02em;color:var(--texto);margin-top:6px}
+.marca h1 span{color:var(--folha)}
+.marca .lead{color:var(--apagado);margin-top:10px;max-width:46ch}
+.elementos{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.el{width:58px;height:62px;border:2px solid var(--linha);border-radius:4px;background:var(--solo-2);padding:4px 6px;display:flex;flex-direction:column;justify-content:space-between}
+.el small{font:400 .66rem/1 var(--display);color:var(--apagado)}
+.el b{font:700 1.45rem/1 var(--display)}
+.el i{font:400 .58rem/1 var(--corpo);font-style:normal;color:var(--apagado)}
+.cartas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:26px}
+.carta{
+  text-align:left;color:var(--texto);background:var(--solo-2);border:2px solid var(--linha);border-radius:8px;
+  padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;font-family:var(--corpo);
+  transition:transform .12s, border-color .12s, background .12s;
+}
+.carta:hover,.carta:focus-visible{border-color:var(--cadmio);background:var(--solo-3);transform:translateY(-3px)}
+.carta .thumb{height:74px;border-radius:4px;display:grid;place-items:center;background:var(--solo-3)}
+.carta .thumb img{width:auto;height:52px;image-rendering:pixelated}
+.carta .titulo{font:700 1.3rem/1.05 var(--display)}
+.carta .linha{font-size:.92rem;color:var(--apagado)}
+.carta .txt{display:flex;flex-direction:column;gap:6px;min-width:0}
+.carta .meta{font:400 .78rem/1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--cadmio)}
+.menu-acoes{margin-top:18px}
+.dica{margin-top:16px;color:var(--apagado);font-size:.88rem;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.lado{display:flex;flex-direction:column;gap:16px}
+.qr-box{background:var(--texto);color:var(--solo);border-radius:8px;padding:14px;text-align:center}
+.qr-box #qr-mini{display:grid;place-items:center;min-height:180px}
+.qr-box #qr-mini svg,.qr-grande svg{width:100%;height:auto;max-width:220px}
+.qr-box p{font:700 1rem/1.2 var(--display);margin-top:8px}
+.qr-box small{display:block;font-size:.75rem;opacity:.75;margin-top:4px;word-break:break-all}
+.recordes{background:var(--solo-2);border:2px solid var(--linha);border-radius:8px;padding:14px}
+.recordes h2{font-size:1.1rem;margin-bottom:10px}
+.rec-jogo{padding-block:8px;border-top:1px solid var(--linha)}
+.rec-jogo:first-of-type{border-top:0}
+.rec-jogo h3{font:700 .78rem/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--apagado);margin-bottom:6px}
+.rec-l{display:flex;justify-content:space-between;gap:10px;font-family:var(--display);font-size:1rem}
+.rec-l .num{color:var(--cadmio)}
+.vazio{color:var(--apagado);font-size:.88rem}
+.status{font-size:.78rem;color:var(--apagado);margin-top:8px}
+.pad-ok{color:var(--folha)}
+
+/* INSTRUÇÕES / PAINÉIS */
+.centro{display:grid;place-items:center}
+.painel{width:min(640px,100%);background:var(--solo-2);border:2px solid var(--linha);border-radius:10px;padding:26px;display:flex;flex-direction:column;gap:14px}
+.painel h2{font-size:clamp(1.8rem,5vw,2.6rem)}
+.painel .desc{max-width:60ch}
+.controles{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.controles li{display:flex;align-items:center;gap:10px}
+.ciencia{border-left:3px solid var(--folha);padding:8px 12px;background:var(--solo-3);border-radius:0 6px 6px 0;font-size:.95rem}
+.teclado{font-size:.82rem;color:var(--apagado)}
+
+/* JOGO */
+#jogo{gap:8px;padding-block:8px}
+#hud{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;font-family:var(--display);min-height:28px}
+#hud .h{display:flex;gap:6px;align-items:baseline}
+#hud .h small{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--apagado)}
+#hud .h b{font-size:1.15rem;font-variant-numeric:tabular-nums}
+#hud .h.alerta b{color:var(--perigo)}
+#bt-pausa{margin-left:auto;padding:6px 12px;font-size:.9rem}
+#girar{font-size:.85rem;color:var(--cadmio)}
+#palco{flex:1;min-height:0;position:relative;display:grid;place-items:center}
+#cv{display:block;image-rendering:pixelated;border:2px solid var(--linha);border-radius:4px;background:#000;touch-action:none}
+#toast{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(560px,calc(100% - 24px));
+  background:rgba(23,19,14,.94);border:2px solid var(--folha);border-radius:6px;padding:10px 14px;
+  font-size:clamp(.85rem,2.2vw,1rem);line-height:1.35;pointer-events:none;
+}
+#toast.perigo{border-color:var(--toxico)}
+#toast.aviso{border-color:var(--cadmio)}
+#pausa{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,8,6,.72)}
+#pausa .painel{width:min(360px,90%);text-align:center}
+#pausa .linha-botoes{justify-content:center}
+#toque{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:6px}
+#toque button{
+  touch-action:none;-webkit-user-select:none;user-select:none;border:2px solid var(--linha);
+  background:var(--solo-3);color:var(--texto);font:700 1.3rem/1 var(--display);border-radius:10px;
+}
+#toque button.on{background:var(--linha)}
+.cruz{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,52px);gap:4px}
+.cruz button{width:100%;height:100%}
+.k-up{grid-area:1/2}.k-left{grid-area:2/1}.k-right{grid-area:2/3}.k-down{grid-area:3/2}
+.cruz.so-lados{grid-template-rows:52px}
+.cruz.so-lados .k-left,.cruz.so-lados .k-right{grid-row:1}
+.cruz.so-lados .k-down{grid-row:1;grid-column:2}
+.botoes{display:flex;gap:12px;align-items:center}
+.botoes button{width:76px;height:76px;border-radius:50%!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.botoes button span{font:400 .62rem/1 var(--corpo)}
+#toque .bt-a{background:#2f7a2c;border-color:#3d9a3a}
+#toque .bt-b{background:#9a2a24;border-color:#c7372f}
+#toast.topo{top:10px;bottom:auto}
+body.toque #hud{gap:2px 12px}
+body.toque #hud .h b{font-size:.95rem}
+body.toque #hud .h small{font-size:.6rem}
+@media (orientation:landscape) and (pointer:coarse){
+  #jogo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);gap:4px 10px;padding-block:4px}
+  #hud{grid-column:1/-1;min-height:0}
+  #girar{display:none!important}
+  #palco{grid-column:2;grid-row:2}
+  #toque{display:contents}
+  .cruz{grid-column:1;grid-row:2;align-self:center;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px)}
+  .cruz.so-lados{grid-template-columns:repeat(2,56px);grid-template-rows:64px}
+  .cruz.so-lados .k-right{grid-column:2}
+  .cruz.tres{grid-template-columns:repeat(3,52px)}
+  .cruz.tres .k-right{grid-column:3}
+  .botoes{grid-column:3;grid-row:2;flex-direction:column-reverse;align-self:center;gap:10px}
+  .botoes button{width:68px;height:68px}
+  #toast{font-size:.8rem;padding:6px 10px}
+}
+/* FIM */
+.placar{font:700 clamp(3.4rem,12vw,5.4rem)/1 var(--display);color:var(--cadmio);font-variant-numeric:tabular-nums}
+.resumo{display:grid;gap:6px;margin:0}
+.resumo div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--linha);padding-bottom:6px}
+.resumo dt{color:var(--apagado)}
+.resumo dd{margin:0;font-family:var(--display);font-variant-numeric:tabular-nums}
+
+/* INICIAIS */
+.iniciais{display:flex;justify-content:center;gap:16px;margin-block:8px}
+.slot{display:flex;flex-direction:column;align-items:center;gap:6px}
+.slot .letra{font:700 3.6rem/1 var(--display);width:72px;height:84px;display:grid;place-items:center;border:3px solid var(--linha);border-radius:8px;background:var(--solo)}
+.slot.ativo .letra{border-color:var(--cadmio);color:var(--cadmio)}
+.slot button{width:72px;padding:8px 0}
+
+/* PESQUISA */
+.ops{display:grid;gap:10px}
+.ops.numeros{grid-template-columns:repeat(5,minmax(0,1fr))}
+.op{font:400 1rem/1.3 var(--corpo);text-align:left;color:var(--texto);background:var(--solo-3);border:2px solid var(--linha);border-radius:8px;padding:14px 16px;cursor:pointer}
+.ops.numeros .op{text-align:center;font:700 1.5rem/1 var(--display)}
+.op:hover{border-color:var(--apagado)}
+.progresso{display:flex;gap:6px}
+.progresso i{flex:1;height:6px;border-radius:3px;background:var(--linha)}
+.progresso i.ok{background:var(--folha)}
+
+/* RANKING */
+.abas{display:flex;flex-wrap:wrap;gap:8px}
+.aba{font:700 .95rem/1 var(--display);color:var(--apagado);background:transparent;border:2px solid var(--linha);border-radius:999px;padding:10px 16px;cursor:pointer}
+.aba.sel{color:var(--solo);background:var(--cadmio);border-color:var(--cadmio)}
+.tabela{width:100%;border-collapse:collapse;font-family:var(--display)}
+.tabela td{padding:9px 6px;border-bottom:1px solid var(--linha);font-size:1.15rem}
+.tabela td.pos{color:var(--apagado);width:2.2em}
+.tabela td.pts{text-align:right;color:var(--cadmio);font-variant-numeric:tabular-nums}
+.tabela td.disp{text-align:right;width:4.5em}
+.tabela tr.voce td{background:rgba(240,192,58,.12)}
+.chip{font:400 .66rem/1 var(--display);letter-spacing:.08em;padding:3px 6px;border-radius:4px;border:1px solid var(--linha);color:var(--apagado)}
+.qr-grande{background:var(--texto);border-radius:10px;padding:18px;display:grid;place-items:center}
+
+@media (max-width:900px){
+  .menu-grid{grid-template-columns:minmax(0,1fr)}
+  .cartas{grid-template-columns:minmax(0,1fr)}
+  .carta{flex-direction:row;align-items:center}
+  .carta .thumb{flex:0 0 76px;height:76px}
+  .carta .txt{min-width:0;display:flex;flex-direction:column;gap:4px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- MENU -->
+  <section class="tela rolavel" id="menu">
+    <div class="menu-grid">
+      <div>
+        <header class="marca">
+          <p class="eyebrow">ETEC Antônio Furlan · III Mostra Científica 2026</p>
+          <h1>Solo <span>Limpo</span></h1>
+          <p class="lead">Três jogos rápidos sobre metais pesados no solo da cidade. Escolha um, faça pontos e entre no ranking.</p>
+          <div class="elementos" aria-label="Metais pesados do nosso artigo">
+            <div class="el" style="border-color:#8796ab"><small>82</small><b style="color:#8796ab">Pb</b><i>Chumbo</i></div>
+            <div class="el" style="border-color:#c9d1db"><small>80</small><b style="color:#c9d1db">Hg</b><i>Mercúrio</i></div>
+            <div class="el" style="border-color:#f0c03a"><small>48</small><b style="color:#f0c03a">Cd</b><i>Cádmio</i></div>
+            <div class="el" style="border-color:#86c95a"><small>33</small><b style="color:#86c95a">As</b><i>Arsênio</i></div>
+            <div class="el" style="border-color:#e8913a"><small>24</small><b style="color:#e8913a">Cr</b><i>Cromo</i></div>
+          </div>
+        </header>
+
+        <div class="cartas">
+          <button class="carta" data-nav data-jogo="descarte" id="carta-descarte">
+            <span class="thumb"><img alt="" data-spr="pilha"></span>
+            <span class="txt"><span class="meta">Arcade · 60 s</span><span class="titulo">Descarte Certo</span><span class="linha">Mande cada item pra lixeira certa antes que caia.</span></span>
+          </button>
+          <button class="carta" data-nav data-jogo="plataforma" id="carta-plataforma">
+            <span class="thumb"><img alt="" data-spr="jog"></span>
+            <span class="txt"><span class="meta">Plataforma · 3 fases</span><span class="titulo">Patrulha Barueri</span><span class="linha">Recolha o lixo e vença as nuvens de metal.</span></span>
+          </button>
+          <button class="carta" data-nav data-jogo="fito" id="carta-fito">
+            <span class="thumb"><img alt="" data-spr="gir"></span>
+            <span class="txt"><span class="meta">Estratégia · 90 s</span><span class="titulo">Jardim Limpador</span><span class="linha">Plante pra limpar o solo e proteger o parque.</span></span>
+          </button>
+        </div>
+
+        <div class="linha-botoes menu-acoes">
+          <button class="btn" data-nav id="bt-rank">Ranking</button>
+          <button class="btn so-pc" data-nav id="bt-qr">Jogar no celular</button>
+          <button class="btn so-pc" data-nav id="bt-tela">Tela cheia</button>
+        </div>
+        <p class="dica so-pc"><span><span class="k k-d">✚</span> escolher</span><span><span class="k k-a">A</span> confirmar</span><span><span class="k k-b">B</span> voltar</span><span id="pad-status">Teclado: setas, Espaço e X</span></p>
+      </div>
+
+      <aside class="lado">
+        <div class="qr-box so-pc" id="qr-box" hidden>
+          <div id="qr-mini"></div>
+          <p>Jogue no seu celular</p>
+          <small id="qr-url"></small>
+        </div>
+        <div class="recordes">
+          <h2>Recordes</h2>
+          <div id="recordes"></div>
+          <p class="status" id="rec-status"></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- INSTRUÇÕES -->
+  <section class="tela rolavel centro" id="instr" hidden>
+    <div class="painel">
+      <p class="eyebrow" id="instr-tipo"></p>
+      <h2 id="instr-titulo"></h2>
+      <p class="desc" id="instr-desc"></p>
+      <ul class="controles" id="instr-ctrl"></ul>
+      <p class="teclado so-pc">Teclado: setas pra mover, Espaço = A, X = B, Esc = pausa.</p>
+      <p class="ciencia" id="instr-ciencia"></p>
+      <div class="linha-botoes">
+        <button class="btn primario" data-nav id="bt-comecar">Começar</button>
+        <button class="btn" data-nav data-back id="bt-instr-voltar">Voltar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOGO -->
+  <section class="tela" id="jogo" hidden>
+    <div id="hud"></div>
+    <p id="girar" class="so-toque">Vire o celular na horizontal pra jogar melhor.</p>
+    <div id="palco">
+      <canvas id="cv" width="480" height="270" aria-label="Tela do jogo"></canvas>
+      <div id="toast" hidden></div>
+      <div id="pausa" hidden>
+        <div class="painel">
+          <h2>Pausado</h2>
+          <div class="linha-botoes">
+            <button class="btn primario" data-nav data-back id="bt-continuar">Continuar</button>
+            <button class="btn" data-nav id="bt-sair">Sair</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="toque" class="so-toque">
+      <div class="cruz" id="cruz">
+        <button tabindex="-1" data-k="up" class="k-up" aria-label="Cima">▲</button>
+        <button tabindex="-1" data-k="left" class="k-left" aria-label="Esquerda">◀</button>
+        <button tabindex="-1" data-k="right" class="k-right" aria-label="Direita">▶</button>
+        <button tabindex="-1" data-k="down" class="k-down" aria-label="Baixo">▼</button>
+      </div>
+      <div class="botoes">
+        <button tabindex="-1" data-k="b" class="bt-b"><b>B</b><span id="lbl-b"></span></button>
+        <button tabindex="-1" data-k="a" class="bt-a"><b>A</b><span id="lbl-a"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIM -->
+  <section class="tela rolavel centro" id="fim" hidden>
+    <div class="painel">
+      <p class="eyebrow" id="fim-jogo"></p>
+      <h2 id="fim-titulo">Fim de jogo</h2>
+      <div class="placar" id="fim-pontos">0</div>
+      <dl class="resumo" id="fim-resumo"></dl>
+      <p class="ciencia" id="fim-licao"></p>
+      <div class="linha-botoes">
+        <button class="btn primario" data-nav id="bt-salvar">Salvar no ranking</button>
+        <button class="btn" data-nav id="bt-denovo">Jogar de novo</button>
+        <button class="btn" data-nav data-back id="bt-fim-menu">Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- INICIAIS -->
+  <section class="tela rolavel centro" id="nome" hidden>
+    <div class="painel" style="text-align:center">
+      <p class="eyebrow">Ranking</p>
+      <h2>Suas iniciais</h2>
+      <p class="so-pc teclado">✚ cima e baixo trocam a letra, esquerda e direita trocam a casa. <span class="k k-a">A</span> confirma.</p>
+      <div class="iniciais" id="iniciais"></div>
+      <div class="linha-botoes" style="justify-content:center">
+        <button class="btn primario" id="bt-confirmar">Confirmar</button>
+        <button class="btn" id="bt-nome-voltar">Voltar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PESQUISA -->
+  <section class="tela rolavel centro" id="pesq" hidden>
+    <div class="painel" id="pesq-painel"></div>
+  </section>
+
+  <!-- RANKING -->
+  <section class="tela rolavel centro" id="rank" hidden>
+    <div class="painel">
+      <p class="eyebrow">Ranking</p>
+      <h2 id="rank-titulo">Melhores pontuações</h2>
+      <div class="abas" id="abas">
+        <button class="aba" data-nav data-aba="descarte">Descarte Certo</button>
+        <button class="aba" data-nav data-aba="plataforma">Patrulha Barueri</button>
+        <button class="aba" data-nav data-aba="fito">Jardim Limpador</button>
+      </div>
+      <div style="overflow-x:auto"><table class="tabela"><tbody id="rank-corpo"></tbody></table></div>
+      <p class="status" id="rank-status"></p>
+      <div class="linha-botoes">
+        <button class="btn" data-nav data-back id="bt-rank-voltar">Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QR -->
+  <section class="tela rolavel centro" id="qr" hidden>
+    <div class="painel" style="text-align:center">
+      <p class="eyebrow">Jogue no celular</p>
+      <h2>Aponte a câmera pro código</h2>
+      <div class="qr-grande" id="qr-grande"></div>
+      <p class="teclado" id="qr-link"></p>
+      <div class="linha-botoes" style="justify-content:center">
+        <button class="btn" data-nav data-back id="bt-qr-voltar">Voltar</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+'use strict';
+
+/* ================= CONFIGURAÇÃO ================= */
+const CONFIG = {
+  SUPABASE_URL: '',   // ex.: https://abcd.supabase.co
+  SUPABASE_KEY: '',   // chave pública (publishable ou anon)
+  SITE_URL: ''        // link público do jogo; vazio = usa o endereço atual
+};
+
+/* ================= BASE ================= */
+const W = 480, H = 270;
+const TOQUE = matchMedia('(pointer: coarse)').matches;
+const DISP = TOQUE ? 'celular' : 'pc';
+if (TOQUE) document.body.classList.add('toque');
+const $ = s => document.querySelector(s);
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ================= SOM ================= */
+let actx = null;
+function som(tipo) {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const S = { ok: [[660, .06], [990, .09]], erro: [[180, .18]], pulo: [[420, .05], [640, .05]], moeda: [[880, .04], [1320, .07]],
+      dano: [[150, .22]], nav: [[520, .03]], fim: [[523, .1], [659, .1], [784, .22]], planta: [[392, .05], [523, .07]] }[tipo];
+    if (!S) return;
+    let t = actx.currentTime;
+    for (const [f, d] of S) {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = (tipo === 'erro' || tipo === 'dano') ? 'sawtooth' : 'square';
+      o.frequency.value = f; g.gain.setValueAtTime(.05, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + .01); t += d;
+    }
+  } catch (e) {}
+}
+
+/* ================= ENTRADA (teclado, controle, toque) ================= */
+const Input = {
+  kb: {}, touch: {}, held: {}, prev: {}, pressed: {}, ativoEm: performance.now(), padOn: false,
+  KEYS: { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
+    Space: 'a', Enter: 'a', KeyZ: 'a', KeyJ: 'a', KeyX: 'b', KeyK: 'b', Backspace: 'b', Escape: 'start', KeyP: 'start' },
+  NOMES: ['left', 'right', 'up', 'down', 'a', 'b', 'start'],
+  init() {
+    addEventListener('keydown', e => { const k = this.KEYS[e.code]; if (k) { e.preventDefault(); this.kb[k] = true; } });
+    addEventListener('keyup', e => { const k = this.KEYS[e.code]; if (k) this.kb[k] = false; });
+    addEventListener('blur', () => { this.kb = {}; this.touch = {}; });
+    addEventListener('pointerdown', () => { this.ativoEm = performance.now(); }, true);
+  },
+  update() {
+    const pad = {};
+    let pads = [];
+    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch (e) {}
+    for (const gp of pads) {
+      if (!gp) continue;
+      this.padOn = true;
+      const b = i => gp.buttons[i] && gp.buttons[i].pressed, ax = gp.axes || [];
+      if (b(14) || ax[0] < -.5) pad.left = 1;
+      if (b(15) || ax[0] > .5) pad.right = 1;
+      if (b(12) || ax[1] < -.5) pad.up = 1;
+      if (b(13) || ax[1] > .5) pad.down = 1;
+      if (b(0)) pad.a = 1;
+      if (b(1) || b(2)) pad.b = 1;
+      if (b(9) || b(8)) pad.start = 1;
+    }
+    for (const n of this.NOMES) {
+      const h = !!(this.kb[n] || pad[n] || this.touch[n]);
+      this.pressed[n] = h && !this.prev[n];
+      this.held[n] = h; this.prev[n] = h;
+      if (this.pressed[n]) this.ativoEm = performance.now();
+    }
+  },
+  limpar() { this.kb = {}; this.touch = {}; document.querySelectorAll('#toque button.on').forEach(b => b.classList.remove('on')); }
+};
+
+/* ================= TELAS E NAVEGAÇÃO ================= */
+const Telas = {
+  atual: 'menu',
+  show(id, foco) {
+    document.querySelectorAll('.tela').forEach(t => { t.hidden = t.id !== id; });
+    this.atual = id;
+    Input.ativoEm = performance.now();
+    requestAnimationFrame(() => Nav.reset(foco));
+  }
+};
+const Nav = {
+  itens() { return [...document.querySelectorAll(`#${Telas.atual} [data-nav]`)].filter(el => !el.disabled && el.offsetParent !== null); },
+  reset(foco) {
+    if (TOQUE && !Input.padOn) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
+    const it = this.itens(); if (!it.length) return;
+    const alvo = foco ? it.find(e => e.matches(foco)) : null;
+    (alvo || it[0]).focus({ preventScroll: TOQUE });
+  },
+  move(d) {
+    const it = this.itens(); if (!it.length) return;
+    let i = it.indexOf(document.activeElement);
+    i = i < 0 ? 0 : (i + d + it.length) % it.length;
+    it[i].focus(); it[i].scrollIntoView({ block: 'nearest' }); som('nav');
+  },
+  handle() {
+    const p = Input.pressed;
+    if (p.up || p.left) this.move(-1);
+    if (p.down || p.right) this.move(1);
+    if (p.a) { const el = document.activeElement; if (el && el.matches('[data-nav]') && el.offsetParent !== null) el.click(); }
+    if (p.b) { const v = [...document.querySelectorAll(`#${Telas.atual} [data-back]`)].find(e => e.offsetParent !== null); if (v) v.click(); }
+  }
+};
+
+/* ================= TOAST ================= */
+let toastTimer = 0;
+function toast(texto, tipo = 'info', ms = 3400) {
+  const t = $('#toast'); if (!t) return;
+  t.textContent = texto; t.className = tipo + (Jogo.toastTopo ? ' topo' : ''); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+}
+function toastLivre() { const t = $('#toast'); return !t || t.hidden; }
+
+/* ================= SPRITES ================= */
+const PAL = { k: '#1b1712', w: '#f1e9d6', y: '#f0c03a', g: '#8796ab', d: '#4b5363', r: '#e0573f', b: '#4a90d9', l: '#9fd3f0',
+  n: '#7a5230', N: '#4e3420', o: '#e8913a', G: '#86c95a', D: '#3f7a2e', p: '#c457d6', P: '#7d2f8c', s: '#c9d1db', c: '#e8d9a8' };
+const ART = {
+  pilha: ['...ss...', '.kkkkkk.', '.kyyyyk.', '.kyyyyk.', '.kykkyk.', '.kyyyyk.', '.kddddk.', '.kddddk.', '.kddsdk.', '.kddddk.', '.kddddk.', '.kkkkkk.'],
+  bateria: ['.kkkkkkkk.', '.kbbbbbbk.', '.kbwbbwbk.', '.kbbbbbbk.', '.kbbbbbbk.', '.kssssssk.', '.ksdsdssk.', '.kssssssk.', '.kbbbbbbk.', '.kbbbbbbk.', '.kbbbbbbk.', '.kkkkkkkk.'],
+  celular: ['kkkkkkkk', 'kddsdddk', 'kllllllk', 'kllllllk', 'klblbllk', 'kllllllk', 'kllllblk', 'kllllllk', 'kllllllk', 'kllllllk', 'kddddddk', 'kdddsddk', 'kkkkkkkk'],
+  lampada: ['..w..w..', '.w.ww.w.', '.w.ww.w.', '.w.ww.w.', '.w.ww.w.', '..wwww..', '.kssssk.', '.kddddk.', '.kssssk.', '..kddk..', '...kk...'],
+  termometro: ['..kk..', '.kwwk.', '.kwsk.', '.kwsk.', '.kwsk.', '.kwsk.', '.kwsk.', '.kssk.', 'kssssk', 'kssssk', '.kkkk.'],
+  garrafa: ['...bb...', '...ll...', '..llll..', '.llllll.', '.lwllll.', '.lwllll.', '.bbbbbb.', '.bwbbbb.', '.llllll.', '.lwllll.', '.llllll.', '.llllll.', '..llll..'],
+  lata: ['.dssssd.', '.rrrrrr.', '.rwwrrr.', '.rrrrrr.', '.rrwwrr.', '.rrrrrr.', '.rrrrrr.', '.rwrrrr.', '.rrrrrr.', '.dssssd.'],
+  jornal: ['wwwwwwwwww', 'wkkkkwkkkw', 'wwwwwwwwww', 'wkkwkkkkww', 'wkkwwwwwww', 'wwwwkkkkww', 'wkkwwwwwww', 'wkkwkkkkww', 'wwwwwwwwww', 'cccccccccc'],
+  banana: ['........N.', '.......yN.', '......yy..', '.....yyy..', '....yyyo..', '...yyyy...', '..yyyyo...', '.yyyyo....', 'Nyyo......', '.N........'],
+  maca: ['...N....', '...NG...', '.rrrrrr.', 'rrrrrrrr', 'rwrrr...', 'rrrrr...', 'rrrrrr..', 'rrrrrrrr', '.rrrrrr.', '..r..r..'],
+  cafe: ['cccccccc', 'cNNNNNNc', '.cNnNNc.', '.cNNnNc.', '..cNNc..', '..cNNc..', '...cc...'],
+  jog: ['...DDDD...', '..DGGGGD..', '.DGGGGGGGD', '...cccc...', '...ckck...', '...cccc...', '..bbbbbb..', '.cbbbbbbc.', '.cbbbbbbc.', '..bbbbbb..', '..nn..nn..', '..nn..nn..', '.NNN..NNN.'],
+  jog2: ['...DDDD...', '..DGGGGD..', '.DGGGGGGGD', '...cccc...', '...ckck...', '...cccc...', '..bbbbbb..', '.cbbbbbbc.', '.cbbbbbbc.', '..bbbbbb..', '.nn....nn.', '.nn....nn.', 'NNN....NNN'],
+  gir: ['....yyyy....', '..yyyyyyyy..', '.yyyNNNNyyy.', '.yyNNNNNNyy.', '.yyNNNNNNyy.', '.yyyNNNNyyy.', '..yyyyyyyy..', '....yyyy....', '......G.....', '...GG.G.....', '....GGG.....', '......G.GG..', '......GGG...', '......G.....'],
+  vet: ['..G....G....', '..G..G.G..G.', '...G.G.G.G..', '...G.GGG.G..', 'G..GGGGGG..G', '.G.GGDGGG.G.', '..GGDGGDGG..', '..GDGGDGGD..', '...DGDGDG...', '....DDDD....'],
+  broto: ['.G..G.', 'GGG.GG', '.GGGG.', '..GG..', '..D...', '..D...']
+};
+const NUVEM = ['....xxxx....', '..xxxxxxxx..', '.xxxxxxxxxx.', 'xxxwkxxxwkxx', 'xxxwkxxxwkxx', 'xxxxxxxxxxxx', 'xxxxxXXXxxxx', '.xxxxxxxxxx.', '..X..XX..X..'];
+const METAIS = {
+  Pb: { cor: '#8796ab', esc: '#4b5363', nome: 'Chumbo', fato: 'Chumbo (Pb): vem de tinta antiga, bateria e indústria. Prejudica o cérebro, principalmente o das crianças.' },
+  Hg: { cor: '#c9d1db', esc: '#7f8894', nome: 'Mercúrio', fato: 'Mercúrio (Hg): está em lâmpada fluorescente e termômetro antigo. Foi o metal do desastre de Minamata, no Japão.' },
+  Cd: { cor: '#f0c03a', esc: '#9a7a1a', nome: 'Cádmio', fato: 'Cádmio (Cd): vem de pilhas e baterias. Se acumula nos rins.' },
+  As: { cor: '#86c95a', esc: '#3f7a2e', nome: 'Arsênio', fato: 'Arsênio (As): vem de agrotóxico e mineração. Nos parques de Campo Grande-MS, foi um dos que mais elevou o risco de câncer em crianças.' },
+  Cr: { cor: '#e8913a', esc: '#9a5a1c', nome: 'Cromo', fato: 'Cromo (Cr): vem da galvanoplastia. A forma Cr(VI) causa câncer.' }
+};
+const SPR = {};
+function criarSprite(nome, linhas, pal) {
+  const h = linhas.length, w = Math.max(...linhas.map(l => l.length));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  linhas.forEach((l, j) => { [...l].forEach((ch, i) => { if (pal[ch]) { x.fillStyle = pal[ch]; x.fillRect(i, j, 1, 1); } }); });
+  SPR[nome] = c;
+}
+function iniciarSprites() {
+  for (const k in ART) criarSprite(k, ART[k], PAL);
+  for (const m in METAIS) criarSprite('nuv_' + m, NUVEM, { ...PAL, x: METAIS[m].cor, X: METAIS[m].esc });
+  document.querySelectorAll('img[data-spr]').forEach(img => { const s = SPR[img.dataset.spr]; if (s) img.src = s.toDataURL(); });
+}
+function spr(ctx, nome, x, y, e = 2, flip = false) {
+  const s = SPR[nome]; if (!s) return;
+  if (flip) { ctx.save(); ctx.translate(x + s.width * e, y); ctx.scale(-1, 1); ctx.drawImage(s, 0, 0, s.width * e, s.height * e); ctx.restore(); }
+  else ctx.drawImage(s, x, y, s.width * e, s.height * e);
+}
+function txt(ctx, s, x, y, o = {}) {
+  const { tam = 10, cor = '#f2ead7', al = 'left', bl = 'top', sombra = true } = o;
+  ctx.font = `700 ${tam}px "Pixelify Sans", monospace`; ctx.textAlign = al; ctx.textBaseline = bl;
+  if (sombra) { ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillText(s, x + 1, y + 1); }
+  ctx.fillStyle = cor; ctx.fillText(s, x, y);
+}
+function particulas(g, dt) {
+  for (const p of g.parts) { p.t += dt; p.y -= 26 * dt; }
+  g.parts = g.parts.filter(p => p.t < .9);
+}
+function desenhaParticulas(ctx, g) {
+  for (const p of g.parts) { ctx.globalAlpha = 1 - p.t / .9; txt(ctx, p.txt, p.x, p.y, { tam: 11, cor: p.cor, al: 'center' }); }
+  ctx.globalAlpha = 1;
+}
+
+/* ================= JOGO 1: DESCARTE CERTO ================= */
+const LIX = {
+  esp: { nome: 'Coleta especial', curto: 'coleta especial', sub: 'pilhas e eletrônicos', cor: '#e8913a', esc: '#9a5a1c' },
+  rec: { nome: 'Reciclável', curto: 'reciclável', sub: 'plástico, metal, papel', cor: '#4a90d9', esc: '#2a5a8c' },
+  org: { nome: 'Orgânico', curto: 'orgânico', sub: 'restos de comida', cor: '#86c95a', esc: '#3f7a2e' }
+};
+const ITENS = [
+  { id: 'pilha', n: 'Pilha', t: 'esp', fato: 'Pilha no lixo comum solta cádmio, chumbo e mercúrio no solo.' },
+  { id: 'bateria', n: 'Bateria', t: 'esp', fato: 'Bateria de celular tem níquel e cobalto. O lugar dela é o ponto de coleta.' },
+  { id: 'celular', n: 'Celular velho', t: 'esp', fato: 'A placa do celular tem chumbo e cádmio. Eletrônico vai pra coleta especial.' },
+  { id: 'lampada', n: 'Lâmpada fluorescente', t: 'esp', fato: 'Lâmpada fluorescente tem mercúrio. Quebrada no lixo, ele vai pro solo e pro ar.' },
+  { id: 'termometro', n: 'Termômetro', t: 'esp', fato: 'Termômetro antigo tem mercúrio, o mesmo metal do desastre de Minamata.' },
+  { id: 'garrafa', n: 'Garrafa PET', t: 'rec' }, { id: 'lata', n: 'Lata', t: 'rec' }, { id: 'jornal', n: 'Jornal', t: 'rec' },
+  { id: 'banana', n: 'Casca de banana', t: 'org' }, { id: 'maca', n: 'Maçã', t: 'org' }, { id: 'cafe', n: 'Borra de café', t: 'org' }
+];
+
+function criarDescarte() {
+  const LANES = [96, 240, 384], TIPOS = ['esp', 'rec', 'org'], BOCA = 192;
+  const r = Math.random;
+  const predios = []; for (let x = 0; x < W;) { const w = 18 + Math.floor(r() * 30); predios.push({ x, w, h: 40 + Math.floor(r() * 70), jan: Math.floor(r() * 4) }); x += w + 2; }
+  const g = { pontos: 0, tempo: 60, manchas: 0, combo: 0, acertos: 0, erros: 0, salvos: 0, vel: 36, fim: false, parts: [], flash: [0, 0, 0], manchasPos: [], item: null, t: 0, ultimo: '' };
+  function novo() {
+    const perigo = r() < .5;
+    const pool = ITENS.filter(i => (i.t === 'esp') === perigo && i.id !== g.ultimo);
+    const it = pool[Math.floor(r() * pool.length)];
+    g.ultimo = it.id;
+    g.item = { ...it, lane: 1, x: LANES[1], y: 24 };
+  }
+  novo();
+  const mult = () => Math.min(4, 1 + Math.floor(g.combo / 3));
+  g.update = dt => {
+    g.t += dt; g.tempo -= dt;
+    if (g.tempo <= 0) { g.tempo = 0; g.fim = true; return; }
+    const P = Input.pressed, it = g.item;
+    if (P.left && it.lane > 0) { it.lane--; som('nav'); }
+    if (P.right && it.lane < 2) { it.lane++; som('nav'); }
+    it.x += (LANES[it.lane] - it.x) * Math.min(1, dt * 18);
+    it.y += g.vel * (Input.held.down ? 4.5 : 1) * dt;
+    if (it.y >= BOCA) {
+      const lixo = TIPOS[it.lane];
+      if (lixo === it.t) {
+        g.combo++; const pts = 100 * mult(); g.pontos += pts; g.acertos++;
+        if (it.t === 'esp') g.salvos++;
+        som('ok'); g.flash[it.lane] = .45; g.parts.push({ x: LANES[it.lane], y: BOCA - 20, t: 0, txt: '+' + pts, cor: '#f0c03a' });
+        g.vel = Math.min(175, g.vel + 4.5);
+      } else {
+        g.combo = 0; g.erros++; som('erro');
+        if (it.t === 'esp') {
+          g.manchas++; g.manchasPos.push({ x: LANES[it.lane] + (r() - .5) * 60, w: 26 + r() * 20 });
+          g.parts.push({ x: LANES[it.lane], y: BOCA - 20, t: 0, txt: 'mancha de metal!', cor: '#c457d6' });
+          toast(it.fato, 'perigo', 4200);
+          if (g.manchas >= 3) { g.fim = true; return; }
+        } else {
+          g.pontos = Math.max(0, g.pontos - 50);
+          g.parts.push({ x: LANES[it.lane], y: BOCA - 20, t: 0, txt: '-50', cor: '#e0573f' });
+          toast(`${it.n} vai no ${LIX[it.t].curto}.`, 'aviso', 2600);
+        }
+      }
+      novo();
+    }
+    for (let i = 0; i < 3; i++) g.flash[i] = Math.max(0, g.flash[i] - dt);
+    particulas(g, dt);
+  };
+  g.draw = ctx => {
+    const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#1b2330'); gr.addColorStop(.75, '#2a2219'); gr.addColorStop(1, '#2a2219');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    for (const p of predios) {
+      ctx.fillStyle = '#222a35'; ctx.fillRect(p.x, 200 - p.h, p.w, p.h);
+      ctx.fillStyle = 'rgba(240,192,58,.22)';
+      for (let yy = 200 - p.h + 6; yy < 190; yy += 10) for (let xx = p.x + 4; xx < p.x + p.w - 4; xx += 7) if ((xx * 7 + yy * 3 + p.jan) % 5 === 0) ctx.fillRect(xx, yy, 3, 4);
+    }
+    for (let i = 0; i < 3; i++) { ctx.fillStyle = i === g.item.lane ? 'rgba(240,192,58,.09)' : 'rgba(255,255,255,.025)'; ctx.fillRect(LANES[i] - 64, 0, 128, BOCA); }
+    ctx.fillStyle = '#4e3420'; ctx.fillRect(0, 248, W, 22);
+    ctx.fillStyle = '#5f4128'; for (let x = 3; x < W; x += 11) ctx.fillRect(x, 252 + (x % 3) * 5, 3, 2);
+    for (const m of g.manchasPos) { ctx.fillStyle = 'rgba(196,87,214,.8)'; ctx.beginPath(); ctx.ellipse(m.x, 258, m.w, 7, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(125,47,140,.9)'; ctx.beginPath(); ctx.ellipse(m.x + 4, 259, m.w * .45, 3.5, 0, 0, 7); ctx.fill(); }
+    for (let i = 0; i < 3; i++) desenhaLixeira(ctx, LANES[i], BOCA, TIPOS[i], g.flash[i]);
+    const it = g.item, s = SPR[it.id], e = 3, sw = s.width * e, sh = s.height * e;
+    ctx.strokeStyle = 'rgba(240,192,58,.35)'; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.moveTo(it.x, it.y + 14); ctx.lineTo(it.x, BOCA - 8); ctx.stroke(); ctx.setLineDash([]);
+    spr(ctx, it.id, Math.round(it.x - sw / 2), Math.round(it.y - sh), e);
+    txt(ctx, it.n, it.x, it.y + 3, { tam: 10, al: 'center' });
+    desenhaParticulas(ctx, g);
+  };
+  g.hud = () => [['Pontos', g.pontos], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 10], ['Combo', 'x' + mult()], ['Manchas', g.manchas + '/3', g.manchas >= 2]];
+  g.resumo = () => [['Itens no lugar certo', g.acertos], ['Erros', g.erros], ['Pilhas e eletrônicos salvos', g.salvos], ['Manchas no solo', g.manchas]];
+  g.licao = () => 'Pilha, bateria, lâmpada e eletrônico têm metal pesado. O lugar deles é o ponto de coleta, nunca o lixo comum.';
+  g.titulo = () => g.manchas >= 3 ? 'O solo ficou contaminado' : 'Tempo esgotado';
+  return g;
+}
+function desenhaLixeira(ctx, cx, y, t, flash) {
+  const L = LIX[t], w = 100, h = 50, x = cx - w / 2;
+  ctx.fillStyle = L.esc; ctx.fillRect(x - 5, y - 6, w + 10, 8);
+  ctx.fillStyle = L.cor; ctx.fillRect(x, y + 2, w, h);
+  ctx.fillStyle = 'rgba(0,0,0,.16)'; for (let k = 0; k < 5; k++) ctx.fillRect(x + 10 + k * 19, y + 34, 3, h - 34);
+  txt(ctx, L.nome, cx, y + 9, { tam: 11, al: 'center', cor: '#17130e', sombra: false });
+  txt(ctx, L.sub, cx, y + 23, { tam: 8, al: 'center', cor: '#17130e', sombra: false });
+  if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(x - 5, y - 6, w + 10, h + 8); }
+}
+
+/* ================= JOGO 2: PATRULHA BARUERI (plataforma) ================= */
+const T = 16, ROWS = 17;
+const FASES = [
+  { nome: 'Praça', len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
+  { nome: 'Avenida', len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
+  { nome: 'Zona industrial', len: 132, seed: 37, gaps: .28, inim: .75, voa: .35, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria' }
+];
+const TEMAS = {
+  praca: { ceu: ['#1a2a33', '#2b3a2c'], topo: '#6aa84f', topo2: '#3f7a2e', terra: '#5a3d24', terra2: '#4a3220', fundo: '#22332a' },
+  avenida: { ceu: ['#1d1c2c', '#33293a'], topo: '#5a5e68', topo2: '#3a3d45', terra: '#4f3a29', terra2: '#3f2e21', fundo: '#2a2838' },
+  industria: { ceu: ['#2a1f2e', '#3b2a2a'], topo: '#7a7468', topo2: '#57524a', terra: '#4a3326', terra2: '#3a281e', fundo: '#31262c' }
+};
+const LIXO_PLAT = ['pilha', 'bateria', 'celular', 'lampada', 'garrafa', 'lata', 'jornal', 'banana', 'maca'];
+
+function gerarFase(f) {
+  const r = mulberry32(f.seed), L = f.len;
+  const sol = []; for (let y = 0; y < ROWS; y++) sol.push(new Uint8Array(L));
+  const alt = new Int16Array(L).fill(-1);
+  let x = 0, h = 13;
+  while (x < L) {
+    if (x < 10 || x >= L - 24) { alt[x] = h; x++; continue; }
+    const run = 5 + Math.floor(r() * 8);
+    for (let i = 0; i < run && x < L - 24; i++) { alt[x] = h; x++; }
+    if (x >= L - 24) continue;
+    if (r() < f.gaps) { const gw = 2 + Math.floor(r() * 2); for (let i = 0; i < gw && x < L - 24; i++) { alt[x] = -1; x++; } }
+    else if (r() < .55) h = clamp(h + (r() < .5 ? -1 : 1) * (1 + Math.floor(r() * 2)), 10, 13);
+  }
+  for (let xx = 0; xx < L; xx++) if (alt[xx] >= 0) for (let y = alt[xx]; y < ROWS; y++) sol[y][xx] = 1;
+  const itens = [], inim = [], plats = [];
+  for (let xx = 14; xx < L - 28; xx++) {
+    if (alt[xx] >= 0 && alt[xx + 1] === alt[xx] && alt[xx + 2] === alt[xx] && r() < .09) {
+      const py = alt[xx] - 4, w = 3 + Math.floor(r() * 2);
+      for (let i = 0; i < w; i++) sol[py][xx + i] = 2;
+      plats.push({ x: xx, y: py, w });
+      itens.push({ x: (xx + 1) * T + 2, y: (py - 1) * T + 2, id: LIXO_PLAT[Math.floor(r() * LIXO_PLAT.length)], ok: false });
+      xx += w + 4;
+    }
+  }
+  for (let xx = 9; xx < L - 26; xx += 4 + Math.floor(r() * 4)) {
+    if (alt[xx] < 0) continue;
+    const ty = alt[xx] - 1;
+    if (sol[ty][xx] || sol[ty - 1][xx]) continue;
+    itens.push({ x: xx * T + 2, y: ty * T + 2, id: LIXO_PLAT[Math.floor(r() * LIXO_PLAT.length)], ok: false });
+  }
+  for (let xx = 16; xx < L - 26; xx += 6 + Math.floor(r() * 6)) {
+    if (r() > f.inim) continue;
+    const metal = f.metais[Math.floor(r() * f.metais.length)];
+    if (r() < f.voa) {
+      const base = alt[xx] >= 0 ? alt[xx] : 13;
+      inim.push({ tipo: 'voa', x: xx * T, y: (base - 3) * T, bx: xx * T, by: (base - 3) * T, w: 20, h: 16, metal, vivo: true, t: r() * 6 });
+    } else if (alt[xx] >= 0 && alt[xx + 1] === alt[xx]) {
+      inim.push({ tipo: 'anda', x: xx * T, y: alt[xx] * T - 16, w: 20, h: 16, vx: -26, metal, vivo: true, t: 0 });
+    }
+  }
+  const chao = alt[L - 1] * T;
+  const lixeiras = [['esp', L - 17], ['rec', L - 13], ['org', L - 9]].map(([t, tx]) => ({ t, x: tx * T, y: chao - 28, w: 24, h: 28, pisca: 0 }));
+  const meio = Math.floor(L / 2); let cpx = meio; while (cpx < L - 25 && alt[cpx] < 0) cpx++;
+  const fundo = []; const rf = mulberry32(f.seed * 7);
+  for (let fx = -40; fx < L * T * .45 + W; fx += 20 + rf() * 50) fundo.push({ x: fx, w: 20 + rf() * 40, h: 30 + rf() * 80, v: rf() });
+  return { L, sol, alt, itens, inim, lixeiras, plats, bandeira: { x: (L - 4) * T, y: chao - 48 }, cp: { x: cpx * T, y: alt[cpx] * T, ok: false }, fundo, chao };
+}
+
+function criarPlataforma() {
+  const g = { pontos: 0, tempo: 160, vidas: 3, fase: 0, fim: false, venceu: false, derrotados: 0, entregues: 0, largados: 0,
+    carrega: { esp: 0, rec: 0, org: 0 }, parts: [], vistos: {}, sementes: [], brotos: [], t: 0, cam: 0, lv: null, p: null, aviso: 0 };
+  const TIPO_DE = id => ITENS.find(i => i.id === id).t;
+  function carregar(i) {
+    g.lv = gerarFase(FASES[i]);
+    g.spawn = { x: 2 * T, y: g.lv.alt[2] * T - 18 };
+    g.p = { x: g.spawn.x, y: g.spawn.y, w: 12, h: 18, vx: 0, vy: 0, chao: false, dir: 1, coy: 0, buf: 0, inv: 1, cd: 0, anim: 0 };
+    g.sementes = []; g.brotos = []; g.cam = 0;
+    toast(`Fase ${i + 1}: ${FASES[i].nome}. Leve o lixo até as lixeiras no fim.`, 'info', 2800);
+  }
+  carregar(0);
+  const lv = () => g.lv;
+  function solido(tx, ty) { const l = lv(); if (tx < 0 || tx >= l.L) return true; if (ty < 0 || ty >= ROWS) return false; return l.sol[ty][tx] > 0; }
+  function moverX(o, dx) {
+    o.x += dx; const y0 = Math.floor(o.y / T), y1 = Math.floor((o.y + o.h - .01) / T);
+    if (dx > 0) { const tx = Math.floor((o.x + o.w - .01) / T); for (let ty = y0; ty <= y1; ty++) if (solido(tx, ty)) { o.x = tx * T - o.w; return true; } }
+    else if (dx < 0) { const tx = Math.floor(o.x / T); for (let ty = y0; ty <= y1; ty++) if (solido(tx, ty)) { o.x = (tx + 1) * T; return true; } }
+    return false;
+  }
+  function moverY(o, dy) {
+    o.y += dy; const x0 = Math.floor(o.x / T), x1 = Math.floor((o.x + o.w - .01) / T);
+    if (dy > 0) { const ty = Math.floor((o.y + o.h - .01) / T); for (let tx = x0; tx <= x1; tx++) if (solido(tx, ty)) { o.y = ty * T - o.h; return 1; } }
+    else if (dy < 0) { const ty = Math.floor(o.y / T); for (let tx = x0; tx <= x1; tx++) if (solido(tx, ty)) { o.y = (ty + 1) * T; return -1; } }
+    return 0;
+  }
+  const bate = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  function fato(metal) { if (!g.vistos[metal] && toastLivre()) { g.vistos[metal] = 1; toast(METAIS[metal].fato, 'perigo', 4200); } }
+  function matar(e, pts) { e.vivo = false; g.derrotados++; g.pontos += pts; g.brotos.push({ x: e.x + 4, y: e.y + 4, t: 0 }); g.parts.push({ x: e.x + 10, y: e.y - 6, t: 0, txt: '+' + pts, cor: '#86c95a' }); som('ok'); fato(e.metal); }
+  function dano() {
+    const p = g.p; if (p.inv > 0) return;
+    g.vidas--; som('dano'); p.inv = 1.6; p.vy = -220; p.vx = -p.dir * 140;
+    if (g.vidas <= 0) g.fim = true;
+  }
+  function cair() {
+    g.vidas--; som('dano');
+    if (g.vidas <= 0) { g.fim = true; return; }
+    const p = g.p, c = lv().cp;
+    if (c.ok) { p.x = c.x; p.y = c.y - p.h - 2; } else { p.x = g.spawn.x; p.y = g.spawn.y; }
+    p.vx = 0; p.vy = 0; p.inv = 1.6;
+    toast('Caiu no buraco! Perdeu uma vida.', 'aviso', 2000);
+  }
+  function concluirFase() {
+    const c = g.carrega;
+    if (c.esp > 0) { g.largados += c.esp; g.pontos = Math.max(0, g.pontos - 100 * c.esp); toast(`Você deixou ${c.esp} ${c.esp > 1 ? 'itens perigosos' : 'item perigoso'} na rua. -${100 * c.esp}`, 'perigo', 3000); }
+    const resto = c.rec + c.org; if (resto) g.pontos = Math.max(0, g.pontos - 30 * resto);
+    g.carrega = { esp: 0, rec: 0, org: 0 };
+    g.pontos += 500; som('fim');
+    g.fase++;
+    if (g.fase >= FASES.length) { g.venceu = true; g.pontos += Math.ceil(g.tempo) * 10 + g.vidas * 300; g.fim = true; return; }
+    carregar(g.fase);
+  }
+  g.update = dt => {
+    g.t += dt; g.tempo -= dt;
+    if (g.tempo <= 0) { g.tempo = 0; g.fim = true; return; }
+    const p = g.p, I = Input, l = lv();
+    const ax = (I.held.right ? 1 : 0) - (I.held.left ? 1 : 0);
+    p.vx += (ax * 112 - p.vx) * Math.min(1, dt * (p.chao ? 14 : 7));
+    if (ax) p.dir = ax;
+    if (I.pressed.a) p.buf = .13;
+    p.buf -= dt; p.coy = p.chao ? .09 : p.coy - dt;
+    if (p.buf > 0 && p.coy > 0) { p.vy = -330; p.buf = 0; p.coy = 0; som('pulo'); }
+    if (!I.held.a && p.vy < -130) p.vy = -130;
+    p.vy = Math.min(430, p.vy + 900 * dt);
+    if (moverX(p, p.vx * dt)) p.vx = 0;
+    const hit = moverY(p, p.vy * dt); p.chao = hit === 1; if (hit) p.vy = 0;
+    if (p.x < 0) p.x = 0;
+    p.inv = Math.max(0, p.inv - dt); p.cd -= dt; p.anim += Math.abs(p.vx) * dt;
+    if (p.y > ROWS * T + 20) { cair(); if (g.fim) return; }
+
+    if (I.pressed.b && p.cd <= 0) { p.cd = .45; g.sementes.push({ x: p.x + (p.dir > 0 ? p.w : -4), y: p.y + 6, w: 5, h: 5, vx: p.dir * 210, vy: -70, t: 0 }); som('planta'); }
+    for (const s of g.sementes) {
+      s.t += dt; s.vy += 420 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      if (solido(Math.floor((s.x + 2) / T), Math.floor((s.y + 2) / T))) s.t = 9;
+      for (const e of l.inim) if (e.vivo && bate(s, e)) { matar(e, 150); s.t = 9; break; }
+    }
+    g.sementes = g.sementes.filter(s => s.t < 1.3);
+
+    for (const e of l.inim) {
+      if (!e.vivo) continue;
+      e.t += dt;
+      if (Math.abs(e.x - p.x) > W) continue;
+      if (e.tipo === 'anda') {
+        const nx = e.x + e.vx * dt, frente = e.vx > 0 ? nx + e.w : nx;
+        const tx = Math.floor(frente / T), pe = Math.floor((e.y + e.h + 2) / T), corpo = Math.floor((e.y + e.h - 2) / T);
+        if (!solido(tx, pe) || solido(tx, corpo)) e.vx = -e.vx; else e.x = nx;
+      } else { e.x = e.bx + Math.sin(e.t * .9) * 44; e.y = e.by + Math.sin(e.t * 2.2) * 8; }
+      if (bate(p, e)) {
+        if (p.vy > 40 && p.y + p.h - e.y < 12) { matar(e, 200); p.vy = -240; }
+        else dano();
+        if (g.fim) return;
+      }
+    }
+    for (const it of l.itens) {
+      if (it.ok) continue;
+      if (bate(p, { x: it.x, y: it.y, w: 14, h: 16 })) {
+        it.ok = true; const t = TIPO_DE(it.id); g.carrega[t]++; g.pontos += 50; som('moeda');
+        g.parts.push({ x: it.x + 7, y: it.y - 4, t: 0, txt: ITENS.find(i => i.id === it.id).n, cor: LIX[t].cor });
+        if (g.aviso < 1 && t === 'esp') { g.aviso = 1; toast('Item perigoso na mochila. Leve até a lixeira laranja de coleta especial no fim da fase.', 'aviso', 3400); }
+      }
+    }
+    for (const b of l.lixeiras) {
+      b.pisca = Math.max(0, b.pisca - dt);
+      if (g.carrega[b.t] > 0 && bate(p, b)) {
+        const n = g.carrega[b.t]; g.pontos += 150 * n; g.entregues += n; g.carrega[b.t] = 0; b.pisca = .5; som('ok');
+        g.parts.push({ x: b.x + 12, y: b.y - 10, t: 0, txt: '+' + 150 * n, cor: '#f0c03a' });
+      }
+    }
+    if (!l.cp.ok && p.x > l.cp.x) { l.cp.ok = true; som('moeda'); }
+    if (bate(p, { x: l.bandeira.x, y: l.bandeira.y, w: 8, h: 48 })) { concluirFase(); return; }
+    for (const b of g.brotos) b.t += dt;
+    particulas(g, dt);
+    const alvo = clamp(p.x - W * .4, 0, l.L * T - W);
+    g.cam += (alvo - g.cam) * Math.min(1, dt * 8);
+  };
+  g.draw = ctx => {
+    const l = lv(), f = FASES[g.fase] || FASES[2], tm = TEMAS[f.tema], cam = Math.round(g.cam);
+    const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, tm.ceu[0]); gr.addColorStop(1, tm.ceu[1]);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    const px = cam * .45;
+    for (const b of l.fundo) {
+      const x = b.x - px; if (x > W || x + b.w < 0) continue;
+      const base = 200;
+      ctx.fillStyle = tm.fundo;
+      if (f.tema === 'praca') {
+        ctx.fillRect(x + b.w / 2 - 2, base - b.h * .5, 4, b.h * .5);
+        ctx.beginPath(); ctx.arc(x + b.w / 2, base - b.h * .5, b.w * .45, 0, 7); ctx.fill();
+      } else if (f.tema === 'avenida') {
+        ctx.fillRect(x, base - b.h, b.w, b.h);
+        ctx.fillStyle = 'rgba(240,192,58,.18)';
+        for (let yy = base - b.h + 6; yy < base - 6; yy += 10) for (let xx = x + 4; xx < x + b.w - 4; xx += 8) if (((xx + yy) | 0) % 3 === 0) ctx.fillRect(xx, yy, 3, 4);
+      } else {
+        ctx.fillRect(x, base - b.h * .6, b.w, b.h * .6);
+        for (let k = 0; k < b.w; k += 10) { ctx.beginPath(); ctx.moveTo(x + k, base - b.h * .6); ctx.lineTo(x + k + 10, base - b.h * .6 - 8); ctx.lineTo(x + k + 10, base - b.h * .6); ctx.fill(); }
+        if (b.v > .4) {
+          ctx.fillRect(x + b.w - 8, base - b.h - 20, 6, b.h * .4 + 20);
+          for (let k = 0; k < 4; k++) { const ph = (g.t * .4 + k / 4 + b.v) % 1; ctx.fillStyle = `rgba(196,87,214,${.28 * (1 - ph)})`; ctx.beginPath(); ctx.arc(x + b.w - 5 + ph * 16, base - b.h - 24 - ph * 40, 4 + ph * 10, 0, 7); ctx.fill(); }
+          ctx.fillStyle = tm.fundo;
+        }
+      }
+    }
+    const tx0 = Math.max(0, Math.floor(cam / T)), tx1 = Math.min(l.L - 1, tx0 + Math.ceil(W / T) + 1);
+    for (let tx = tx0; tx <= tx1; tx++) {
+      for (let ty = 0; ty < ROWS; ty++) {
+        const v = l.sol[ty][tx]; if (!v) continue;
+        const x = tx * T - cam, y = ty * T;
+        if (v === 2) { ctx.fillStyle = '#8a6a3e'; ctx.fillRect(x, y, T, 7); ctx.fillStyle = '#5e4524'; ctx.fillRect(x, y + 5, T, 2); ctx.fillRect(x + 7, y, 1, 7); continue; }
+        const topo = ty === 0 || !l.sol[ty - 1][tx];
+        ctx.fillStyle = ((tx + ty) & 1) ? tm.terra : tm.terra2; ctx.fillRect(x, y, T, T);
+        if (topo) {
+          ctx.fillStyle = tm.topo2; ctx.fillRect(x, y, T, 6); ctx.fillStyle = tm.topo; ctx.fillRect(x, y, T, 4);
+          if (f.tema === 'avenida' && tx % 4 === 0) { ctx.fillStyle = '#f0c03a'; ctx.fillRect(x + 4, y + 1, 7, 2); }
+          if (f.tema === 'industria' && (tx * 13) % 7 === 0) { ctx.fillStyle = 'rgba(196,87,214,.55)'; ctx.fillRect(x + 3, y + 6, 9, 3); }
+        }
+      }
+    }
+    const cp = l.cp;
+    ctx.fillStyle = '#d8ccb2'; ctx.fillRect(cp.x - cam, cp.y - 24, 2, 24); ctx.fillStyle = cp.ok ? '#86c95a' : '#6b6152'; ctx.fillRect(cp.x - cam + 2, cp.y - 24, 10, 7);
+    for (const b of l.lixeiras) {
+      const L = LIX[b.t], x = b.x - cam;
+      ctx.fillStyle = L.esc; ctx.fillRect(x - 2, b.y, b.w + 4, 5); ctx.fillStyle = L.cor; ctx.fillRect(x, b.y + 4, b.w, b.h - 4);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x + 6, b.y + 10, 2, 14); ctx.fillRect(x + 16, b.y + 10, 2, 14);
+      if (b.pisca > 0) { ctx.fillStyle = `rgba(255,255,255,${b.pisca})`; ctx.fillRect(x - 2, b.y, b.w + 4, b.h); }
+      txt(ctx, b.t === 'esp' ? 'Coleta' : b.t === 'rec' ? 'Recicl.' : 'Orgân.', x + 12, b.y - 12, { tam: 9, al: 'center', cor: L.cor });
+    }
+    const bd = l.bandeira; ctx.fillStyle = '#d8ccb2'; ctx.fillRect(bd.x - cam + 2, bd.y, 3, 48); ctx.fillStyle = '#86c95a'; ctx.fillRect(bd.x - cam + 5, bd.y + 2, 16, 10);
+    for (const it of l.itens) { if (it.ok) continue; const bob = Math.sin(g.t * 3 + it.x) * 2; spr(ctx, it.id, Math.round(it.x - cam), Math.round(it.y + bob), 1.4); }
+    for (const b of g.brotos) spr(ctx, 'broto', Math.round(b.x - cam), Math.round(b.y + Math.min(6, b.t * 20)), 2);
+    for (const e of l.inim) {
+      if (!e.vivo) continue; const x = e.x - cam; if (x < -30 || x > W + 30) continue;
+      spr(ctx, 'nuv_' + e.metal, Math.round(x - 2), Math.round(e.y - 2), 2, e.tipo === 'anda' && e.vx > 0);
+      txt(ctx, e.metal, x + 10, e.y - 12, { tam: 9, al: 'center', cor: METAIS[e.metal].cor });
+    }
+    ctx.fillStyle = '#7a5230'; for (const s of g.sementes) ctx.fillRect(Math.round(s.x - cam), Math.round(s.y), 4, 4);
+    const p = g.p;
+    if (!(p.inv > 0 && Math.floor(g.t * 14) % 2)) {
+      const quadro = (!p.chao || Math.abs(p.vx) < 10) ? 'jog' : (Math.floor(p.anim / 10) % 2 ? 'jog2' : 'jog');
+      spr(ctx, quadro, Math.round(p.x - cam - 1), Math.round(p.y), 1.4, p.dir < 0);
+    }
+    desenhaParticulasCam(ctx, g, cam);
+  };
+  g.hud = () => {
+    const c = g.carrega;
+    return [['Pontos', g.pontos], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 20], ['Vidas', g.vidas, g.vidas === 1],
+      ['Fase', `${Math.min(g.fase + 1, 3)}/3`], ['Mochila', `${c.esp} perigoso · ${c.rec} recicl. · ${c.org} orgân.`]];
+  };
+  g.resumo = () => [['Fases completas', g.fase], ['Nuvens de metal vencidas', g.derrotados], ['Lixo entregue certo', g.entregues], ['Itens perigosos largados', g.largados]];
+  g.licao = () => 'Indústria, trânsito e lixo jogado no lugar errado são as maiores fontes de metal no solo das cidades.';
+  g.titulo = () => g.venceu ? 'Barueri mais limpa!' : (g.tempo <= 0 ? 'Tempo esgotado' : 'Fim de jogo');
+  return g;
+}
+function desenhaParticulasCam(ctx, g, cam) {
+  for (const p of g.parts) { ctx.globalAlpha = 1 - p.t / .9; txt(ctx, p.txt, p.x - cam, p.y, { tam: 10, cor: p.cor, al: 'center' }); }
+  ctx.globalAlpha = 1;
+}
+
+/* ================= JOGO 3: JARDIM LIMPADOR (fitorremediação) ================= */
+const PLANTAS = {
+  gir: { nome: 'Girassol', custo: 2, papel: 'puxa o metal', spr: 'gir' },
+  vet: { nome: 'Vetiver', custo: 1, papel: 'segura o metal', spr: 'vet' }
+};
+function criarFito() {
+  const C = 12, Lh = 6, CEL = 30, OX = 60, OY = 34, N = C * Lh;
+  const id = (c, l) => l * C + c;
+  const cont = new Float32Array(N), delta = new Float32Array(N);
+  const planta = new Array(N).fill(null);
+  const parque = new Set(); for (let c = 7; c <= 9; c++) for (let l = 4; l <= 5; l++) parque.add(id(c, l));
+  const fabricas = [
+    { c: 0, l: 0, ini: 0, taxa: .2, lado: 'esq' },
+    { c: 11, l: 0, ini: 20, taxa: .22, lado: 'dir' },
+    { c: 0, l: 4, ini: 45, taxa: .24, lado: 'esq' }
+  ];
+  const g = { pontos: 0, tempo: 90, sementes: 6, regen: 0, tipo: 'gir', cur: { c: 4, l: 2 }, saude: 100, absorvido: 0, colhidas: 0, plantadas: 0,
+    fim: false, parts: [], rep: 0, t: 0, dicas: {} };
+  const MAX_SEM = 10, CHEIA = 1.2, K = .5;
+  toast('As fábricas soltam metal no solo e ele se espalha. Proteja o parque até o tempo acabar!', 'info', 3800);
+  const decorrido = () => 90 - g.tempo;
+  const ativa = f => decorrido() >= f.ini;
+  const bloqueada = i => planta[i] && planta[i].tipo === 'vet';
+  function acao() {
+    const i = id(g.cur.c, g.cur.l), pl = planta[i];
+    if (parque.has(i)) { if (toastLivre()) toast('Esse é o parque: as crianças brincam aqui. Plante em volta pra proteger.', 'aviso', 2600); som('erro'); return; }
+    if (pl) {
+      if (pl.tipo === 'gir' && pl.carga >= CHEIA) {
+        planta[i] = null; g.colhidas++; g.pontos += 300; som('ok');
+        g.parts.push({ x: OX + g.cur.c * CEL + 15, y: OY + g.cur.l * CEL, t: 0, txt: '+300', cor: '#f0c03a' });
+        if (!g.dicas.colheu) { g.dicas.colheu = 1; toast('Planta cheia de metal colhida. Ela vai pro descarte de resíduo perigoso.', 'info', 3200); }
+      } else som('erro');
+      return;
+    }
+    const P = PLANTAS[g.tipo];
+    if (g.sementes < P.custo) { som('erro'); if (toastLivre()) toast(`Faltam sementes. ${P.nome} custa ${P.custo}.`, 'aviso', 1800); return; }
+    g.sementes -= P.custo; g.plantadas++; planta[i] = { tipo: g.tipo, carga: 0, t: 0 }; som('planta');
+    if (g.tipo === 'gir' && !g.dicas.gir) { g.dicas.gir = 1; toast('Girassol é hiperacumulador: puxa o metal do solo pras folhas. Quando encher, colha com A.', 'info', 3600); }
+    if (g.tipo === 'vet' && !g.dicas.vet) { g.dicas.vet = 1; toast('Vetiver estabiliza: a raiz segura o metal e ele para de se espalhar.', 'info', 3400); }
+  }
+  g.toque = (x, y) => {
+    if (y > 230) { g.tipo = x < W / 2 ? 'gir' : 'vet'; som('nav'); return; }
+    const c = Math.floor((x - OX) / CEL), l = Math.floor((y - OY) / CEL);
+    if (c < 0 || c >= C || l < 0 || l >= Lh) return;
+    g.cur = { c, l }; acao();
+  };
+  g.update = dt => {
+    g.t += dt; g.tempo -= dt;
+    if (g.tempo <= 0) { g.tempo = 0; g.pontos += Math.round(g.saude) * 10; g.fim = true; return; }
+    const I = Input;
+    const dir = I.held.left ? [-1, 0] : I.held.right ? [1, 0] : I.held.up ? [0, -1] : I.held.down ? [0, 1] : null;
+    const novo = I.pressed.left || I.pressed.right || I.pressed.up || I.pressed.down;
+    if (dir) {
+      if (novo) { g.rep = .22; g.cur.c = clamp(g.cur.c + dir[0], 0, C - 1); g.cur.l = clamp(g.cur.l + dir[1], 0, Lh - 1); }
+      else { g.rep -= dt; if (g.rep <= 0) { g.rep = .085; g.cur.c = clamp(g.cur.c + dir[0], 0, C - 1); g.cur.l = clamp(g.cur.l + dir[1], 0, Lh - 1); } }
+    }
+    if (I.pressed.a) acao();
+    if (I.pressed.b) { g.tipo = g.tipo === 'gir' ? 'vet' : 'gir'; som('nav'); }
+    g.regen += dt; if (g.regen >= 2.2) { g.regen = 0; g.sementes = Math.min(MAX_SEM, g.sementes + 1); }
+
+    const fator = 1 + decorrido() / 90;
+    for (const f of fabricas) {
+      if (!ativa(f)) continue;
+      if (!f.avisou && f.ini > 0) { f.avisou = 1; toast('Uma nova fábrica começou a soltar metal!', 'perigo', 2600); }
+      const i = id(f.c, f.l); cont[i] = Math.min(1, cont[i] + f.taxa * fator * dt);
+    }
+    delta.fill(0);
+    for (let l = 0; l < Lh; l++) for (let c = 0; c < C; c++) {
+      const i = id(c, l); if (bloqueada(i)) continue;
+      const viz = []; if (c + 1 < C) viz.push(id(c + 1, l)); if (l + 1 < Lh) viz.push(id(c, l + 1));
+      for (const j of viz) { if (bloqueada(j)) continue; const fl = (cont[i] - cont[j]) * K * dt; delta[i] -= fl; delta[j] += fl; }
+    }
+    for (let i = 0; i < N; i++) {
+      cont[i] = clamp(cont[i] + delta[i], 0, 1);
+      const pl = planta[i]; if (!pl) continue;
+      pl.t += dt;
+      if (pl.tipo === 'gir' && pl.carga < CHEIA) {
+        const a = Math.min(cont[i], .24 * dt, CHEIA - pl.carga);
+        cont[i] -= a; pl.carga += a; g.absorvido += a; g.pontos += a * 120;
+      } else if (pl.tipo === 'vet') {
+        const a = Math.min(cont[i], .035 * dt); cont[i] -= a; g.absorvido += a; g.pontos += a * 120;
+      }
+    }
+    for (const i of parque) if (cont[i] > .2) g.saude -= cont[i] * 9 * dt;
+    if (g.saude <= 0) { g.saude = 0; g.fim = true; return; }
+    particulas(g, dt);
+  };
+  const mistura = (a, b, t) => { const p = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, k) => Math.round(v + (B[k] - v) * t)).join(',')})`; };
+  g.draw = ctx => {
+    ctx.fillStyle = '#1d1812'; ctx.fillRect(0, 0, W, H);
+    for (let l = 0; l < Lh; l++) for (let c = 0; c < C; c++) {
+      const i = id(c, l), x = OX + c * CEL, y = OY + l * CEL, v = cont[i];
+      const base = parque.has(i) ? '#3f7a2e' : '#5a3d24';
+      ctx.fillStyle = mistura(base, '#7d2f8c', Math.min(1, v * 1.15)); ctx.fillRect(x + 1, y + 1, CEL - 2, CEL - 2);
+      if (v > .55) { ctx.fillStyle = 'rgba(214,140,230,.55)'; const s = Math.floor(g.t * 3 + i) % 3; ctx.fillRect(x + 6 + s * 6, y + 8 + s * 4, 2, 2); ctx.fillRect(x + 20 - s * 4, y + 20, 2, 2); }
+      if (parque.has(i)) {
+        ctx.fillStyle = 'rgba(242,234,215,.55)';
+        if (c === 7 && l === 4) { ctx.fillRect(x + 6, y + 6, 2, 18); ctx.fillRect(x + 22, y + 6, 2, 18); ctx.fillRect(x + 6, y + 6, 18, 2); ctx.fillRect(x + 12, y + 8, 1, 10); ctx.fillRect(x + 10, y + 18, 5, 2); }
+        if (c === 9 && l === 5) { ctx.beginPath(); ctx.moveTo(x + 4, y + 24); ctx.lineTo(x + 24, y + 8); ctx.lineTo(x + 26, y + 10); ctx.lineTo(x + 7, y + 25); ctx.fill(); }
+        if (c === 8 && l === 4) { ctx.fillStyle = '#f0c03a'; ctx.fillRect(x + 12, y + 8, 5, 5); ctx.fillStyle = '#4a90d9'; ctx.fillRect(x + 11, y + 13, 7, 8); ctx.fillStyle = '#e8d9a8'; ctx.fillRect(x + 11, y + 21, 2, 4); ctx.fillRect(x + 16, y + 21, 2, 4); }
+      }
+    }
+    txt(ctx, `Parque ${Math.ceil(g.saude)}%`, OX + 8 * CEL + 15, OY + 6 * CEL + 3, { tam: 9, al: 'center', cor: g.saude < 40 ? '#e0573f' : '#86c95a' });
+    for (const f of fabricas) {
+      const ok = ativa(f), y = OY + f.l * CEL, x = f.lado === 'esq' ? OX - 40 : OX + C * CEL + 6;
+      ctx.fillStyle = ok ? '#6b5f55' : '#3a332c'; ctx.fillRect(x, y + 10, 34, 20);
+      ctx.fillRect(x + (f.lado === 'esq' ? 4 : 24), y - 6, 6, 18);
+      ctx.fillStyle = ok ? '#f0c03a' : '#2a241e'; ctx.fillRect(x + 6, y + 16, 5, 5); ctx.fillRect(x + 16, y + 16, 5, 5);
+      if (ok) for (let k = 0; k < 3; k++) { const ph = (g.t * .5 + k / 3) % 1; ctx.fillStyle = `rgba(196,87,214,${.4 * (1 - ph)})`; ctx.beginPath(); ctx.arc(x + (f.lado === 'esq' ? 7 : 27) + ph * 8, y - 8 - ph * 22, 3 + ph * 6, 0, 7); ctx.fill(); }
+      else txt(ctx, Math.ceil(f.ini - decorrido()) + 's', x + 17, y + 2, { tam: 9, al: 'center', cor: '#ab9f88' });
+      ctx.fillStyle = ok ? 'rgba(196,87,214,.6)' : 'rgba(0,0,0,0)';
+      if (ok) { const ax = f.lado === 'esq' ? OX - 6 : OX + C * CEL; ctx.fillRect(ax, y + 13, 6, 4); }
+    }
+    for (let i = 0; i < N; i++) {
+      const pl = planta[i]; if (!pl) continue;
+      const c = i % C, l = Math.floor(i / C), x = OX + c * CEL, y = OY + l * CEL;
+      const s = SPR[pl.tipo], e = 1.7, cresce = Math.min(1, .5 + pl.t * 1.5);
+      spr(ctx, pl.tipo, Math.round(x + 15 - s.width * e * cresce / 2), Math.round(y + 27 - s.height * e * cresce), e * cresce);
+      if (pl.tipo === 'gir') {
+        const cheia = pl.carga >= CHEIA;
+        ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + 25, 22, 3);
+        ctx.fillStyle = cheia ? (Math.floor(g.t * 6) % 2 ? '#f0c03a' : '#c457d6') : '#c457d6'; ctx.fillRect(x + 4, y + 25, 22 * pl.carga / CHEIA, 3);
+        if (cheia) txt(ctx, 'COLHER', x + 15, y - 1, { tam: 8, al: 'center', cor: '#f0c03a' });
+      }
+    }
+    const cx = OX + g.cur.c * CEL, cy = OY + g.cur.l * CEL;
+    if (!planta[id(g.cur.c, g.cur.l)] && !parque.has(id(g.cur.c, g.cur.l))) { ctx.globalAlpha = .35; spr(ctx, g.tipo, cx + 15 - SPR[g.tipo].width * .85, cy + 27 - SPR[g.tipo].height * 1.7, 1.7); ctx.globalAlpha = 1; }
+    ctx.strokeStyle = Math.floor(g.t * 4) % 2 ? '#f0c03a' : '#f2ead7'; ctx.lineWidth = 2; ctx.strokeRect(cx + 1, cy + 1, CEL - 2, CEL - 2); ctx.lineWidth = 1;
+    const by = 236;
+    for (const [k, x0] of [['gir', 18], ['vet', 248]]) {
+      const P = PLANTAS[k], sel = g.tipo === k;
+      ctx.fillStyle = sel ? '#3a3022' : '#231d15'; ctx.fillRect(x0, by, 214, 30);
+      ctx.strokeStyle = sel ? '#f0c03a' : '#41372a'; ctx.lineWidth = 2; ctx.strokeRect(x0 + 1, by + 1, 212, 28); ctx.lineWidth = 1;
+      spr(ctx, k, x0 + 6, by + 3, k === 'gir' ? 1.7 : 2.2);
+      txt(ctx, P.nome, x0 + 36, by + 5, { tam: 10, cor: sel ? '#f0c03a' : '#f2ead7' });
+      txt(ctx, `${P.custo} semente${P.custo > 1 ? 's' : ''} · ${P.papel}`, x0 + 36, by + 17, { tam: 8, cor: '#ab9f88' });
+    }
+    txt(ctx, TOQUE ? 'Toque no solo pra plantar' : 'B troca a planta', OX, 221, { tam: 8, cor: '#ab9f88' });
+    desenhaParticulas(ctx, g);
+  };
+  g.hud = () => [['Pontos', Math.round(g.pontos)], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 10], ['Sementes', `${g.sementes}/${MAX_SEM}`], ['Parque', Math.ceil(g.saude) + '%', g.saude < 40]];
+  g.resumo = () => [['Plantas colocadas', g.plantadas], ['Girassóis colhidos', g.colhidas], ['Metal retirado do solo', Math.round(g.absorvido * 10) + ' kg*'], ['Saúde do parque', Math.ceil(g.saude) + '%']];
+  g.licao = () => 'Fitorremediação usa plantas pra limpar o solo. É barata e funciona bem em praças e parques, mas é lenta. *Unidade de jogo, não é medida real.';
+  g.titulo = () => g.saude <= 0 ? 'O metal chegou no parque' : 'Parque protegido!';
+  return g;
+}
+
+/* ================= CATÁLOGO DE JOGOS ================= */
+const JOGOS = {
+  descarte: { nome: 'Descarte Certo', tipo: 'Arcade · 60 segundos', criar: criarDescarte,
+    desc: 'Os itens caem do alto. Leve cada um pra lixeira certa. Pilha ou eletrônico no lixo errado vira uma mancha de metal no solo, e com três manchas o jogo acaba. Acertos seguidos multiplicam os pontos.',
+    ctrl: [['◀ ▶', 'escolher a lixeira'], ['▼', 'acelerar a queda']],
+    ciencia: 'No nosso questionário, 57% das pessoas descartam pilhas e eletrônicos no lixo comum ou no reciclável comum. O certo é o ponto de coleta.',
+    toque: { dir: ['left', 'right', 'down'], a: '', b: '' } },
+  plataforma: { nome: 'Patrulha Barueri', tipo: 'Plataforma · 3 fases', criar: criarPlataforma,
+    desc: 'Atravesse a praça, a avenida e a zona industrial. Pegue o lixo do caminho e passe nas lixeiras certas no fim de cada fase. Pule em cima das nuvens de metal ou jogue sementes nelas.',
+    ctrl: [['◀ ▶', 'andar'], ['A', 'pular'], ['B', 'jogar semente']],
+    ciencia: 'Indústria, trânsito e lixo descartado errado são as principais fontes de metal pesado no solo urbano.',
+    toque: { dir: ['left', 'right'], a: 'Pular', b: 'Semente' }, toastTopo: true },
+  fito: { nome: 'Jardim Limpador', tipo: 'Estratégia · 90 segundos', criar: criarFito,
+    desc: 'Fábricas soltam metal no solo e ele se espalha. Plante pra limpar e segurar a contaminação longe do parque das crianças até o tempo acabar.',
+    ctrl: [['✚', 'mover o cursor'], ['A', 'plantar ou colher'], ['B', 'trocar a planta']],
+    ciencia: 'Girassol é hiperacumulador: puxa o metal pras folhas. Vetiver é estabilizador: a raiz segura o metal no lugar. Isso é fitorremediação.',
+    toque: { dir: ['left', 'right', 'up', 'down'], a: 'Plantar', b: 'Trocar' }, toastTopo: true }
+};
+
+/* ================= LOOP DO JOGO ================= */
+const cv = $('#cv'), ctx = cv.getContext('2d');
+const Jogo = {
+  id: null, g: null, pausado: false, hudAntes: '',
+  abrirInstr(id) {
+    this.id = id; const d = JOGOS[id];
+    $('#instr-tipo').textContent = d.tipo; $('#instr-titulo').textContent = d.nome; $('#instr-desc').textContent = d.desc;
+    $('#instr-ciencia').textContent = d.ciencia;
+    $('#instr-ctrl').innerHTML = d.ctrl.map(([k, t]) => `<li><span class="k ${k === 'A' ? 'k-a' : k === 'B' ? 'k-b' : 'k-d'}">${k}</span>${esc(t)}</li>`).join('')
+      + (TOQUE && id === 'fito' ? '<li><span class="k k-d">☝</span>ou toque direto no solo</li>' : '');
+    Telas.show('instr');
+  },
+  iniciar() {
+    const d = JOGOS[this.id];
+    Input.limpar(); this.pausado = false; $('#pausa').hidden = true; $('#toast').hidden = true;
+    this.g = d.criar(); this.hudAntes = '';
+    const cruz = $('#cruz'); cruz.querySelectorAll('button').forEach(b => { b.hidden = !d.toque.dir.includes(b.dataset.k); });
+    cruz.classList.toggle('so-lados', !d.toque.dir.includes('up'));
+    cruz.classList.toggle('tres', d.toque.dir.length === 3);
+    this.toastTopo = !!d.toastTopo;
+    $('.bt-a').hidden = !d.toque.a; $('.bt-b').hidden = !d.toque.b;
+    $('#lbl-a').textContent = d.toque.a; $('#lbl-b').textContent = d.toque.b;
+    Telas.show('jogo'); requestAnimationFrame(redimensionar);
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+  },
+  pausar(v) { this.pausado = v; $('#pausa').hidden = !v; Input.limpar(); if (v) requestAnimationFrame(() => Nav.reset()); },
+  frame(dt) {
+    const g = this.g; if (!g) return;
+    if (Input.pressed.start) this.pausar(!this.pausado);
+    if (this.pausado) Nav.handle();
+    else { g.update(dt); if (g.fim) { g.draw(ctx); return terminar(); } }
+    g.draw(ctx);
+    const itens = g.hud(), chave = JSON.stringify(itens);
+    if (chave !== this.hudAntes) {
+      this.hudAntes = chave;
+      $('#hud').innerHTML = itens.map(([k, v, al]) => `<span class="h${al ? ' alerta' : ''}"><small>${esc(k)}</small><b>${esc(v)}</b></span>`).join('')
+        + '<button class="btn so-toque" id="bt-pausa" tabindex="-1">II</button>';
+    }
+  }
+};
+function redimensionar() {
+  const r = $('#palco').getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const s = Math.max(.3, Math.min(r.width / W, r.height / H));
+  cv.style.width = Math.floor(W * s - 4) + 'px'; cv.style.height = Math.floor(H * s - 4) + 'px';
+  const k = clamp(Math.ceil(s * (devicePixelRatio || 1)), 1, 4);
+  if (cv.width !== W * k) { cv.width = W * k; cv.height = H * k; }
+  ctx.setTransform(k, 0, 0, k, 0, 0); ctx.imageSmoothingEnabled = false;
+}
+addEventListener('resize', () => { if (Telas.atual === 'jogo') redimensionar(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && Telas.atual === 'jogo' && !Jogo.pausado) Jogo.pausar(true); });
+
+/* ================= FIM DE PARTIDA ================= */
+const Ultimo = { jogo: null, pontos: 0, salvo: false, nome: null };
+function terminar() {
+  const g = Jogo.g; som('fim');
+  Object.assign(Ultimo, { jogo: Jogo.id, pontos: Math.max(0, Math.round(g.pontos)), salvo: false, nome: null });
+  $('#fim-jogo').textContent = JOGOS[Jogo.id].nome;
+  $('#fim-titulo').textContent = g.titulo();
+  $('#fim-pontos').textContent = Ultimo.pontos.toLocaleString('pt-BR');
+  $('#fim-resumo').innerHTML = g.resumo().map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+  $('#fim-licao').textContent = g.licao();
+  $('#bt-salvar').hidden = false;
+  Jogo.g = null;
+  Telas.show('fim');
+}
+
+/* ================= INICIAIS ================= */
+const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const Nome = {
+  l: ls.get('solo_iniciais', ['A', 'A', 'A']), slot: 0,
+  abrir() { this.slot = 0; this.render(); Telas.show('nome'); },
+  muda(i, d) { const p = LETRAS.indexOf(this.l[i]); this.l[i] = LETRAS[(p + d + 26) % 26]; this.slot = i; som('nav'); this.render(); },
+  render() {
+    $('#iniciais').innerHTML = this.l.map((c, i) => `<div class="slot${i === this.slot ? ' ativo' : ''}">
+      <button class="btn" data-i="${i}" data-d="-1" aria-label="Letra anterior">▲</button>
+      <div class="letra">${c}</div>
+      <button class="btn" data-i="${i}" data-d="1" aria-label="Próxima letra">▼</button></div>`).join('');
+  },
+  handle() {
+    const p = Input.pressed;
+    if (p.up) this.muda(this.slot, -1);
+    if (p.down) this.muda(this.slot, 1);
+    if (p.left) { this.slot = Math.max(0, this.slot - 1); som('nav'); this.render(); }
+    if (p.right) { this.slot = Math.min(2, this.slot + 1); som('nav'); this.render(); }
+    if (p.a) { if (this.slot < 2) { this.slot++; som('nav'); this.render(); } else this.confirmar(); }
+    if (p.b) Telas.show('fim');
+  },
+  async confirmar() {
+    if (Ultimo.salvo) return;
+    Ultimo.salvo = true; Ultimo.nome = this.l.join(''); ls.set('solo_iniciais', this.l);
+    som('ok');
+    Ranking.enviar({ jogo: Ultimo.jogo, nome: Ultimo.nome, pontos: Ultimo.pontos, dispositivo: DISP });
+    $('#bt-salvar').hidden = true;
+    Pesquisa.oferecer();
+  }
+};
+$('#iniciais').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) Nome.muda(+b.dataset.i, +b.dataset.d); });
+$('#bt-confirmar').addEventListener('click', () => Nome.confirmar());
+$('#bt-nome-voltar').addEventListener('click', () => Telas.show('fim'));
+
+/* ================= REDE (Supabase) ================= */
+const Rede = {
+  ok: !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY),
+  async req(caminho, opt = {}) {
+    const h = { apikey: CONFIG.SUPABASE_KEY, 'Content-Type': 'application/json' };
+    if (CONFIG.SUPABASE_KEY.startsWith('eyJ')) h.Authorization = 'Bearer ' + CONFIG.SUPABASE_KEY;
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 7000);
+    try {
+      const r = await fetch(CONFIG.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/' + caminho, { ...opt, headers: { ...h, ...(opt.headers || {}) }, signal: ctl.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return opt.method === 'POST' ? null : r.json();
+    } finally { clearTimeout(tm); }
+  },
+  async postar(tabela, corpo) { return this.req(tabela, { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(corpo) }); }
+};
+const Fila = {
+  chave: 'solo_fila',
+  add(tabela, corpo) { const f = ls.get(this.chave, []); f.push({ tabela, corpo }); ls.set(this.chave, f.slice(-300)); },
+  pendentes(tabela) { return ls.get(this.chave, []).filter(x => x.tabela === tabela).map(x => x.corpo); },
+  async enviar() {
+    if (!Rede.ok || this.rodando) return; this.rodando = true;
+    const f = ls.get(this.chave, []), resto = [];
+    for (const x of f) { try { await Rede.postar(x.tabela, x.corpo); } catch (e) { resto.push(x); } }
+    ls.set(this.chave, resto.concat(ls.get(this.chave, []).slice(f.length)));
+    this.rodando = false;
+  }
+};
+const Ranking = {
+  online: false,
+  async top(jogo, n = 10) {
+    let lista = [];
+    this.online = false;
+    if (Rede.ok) {
+      try { lista = await Rede.req(`ranking?select=nome,pontos,dispositivo&jogo=eq.${jogo}&order=pontos.desc,criado_em.asc&limit=${n}`); this.online = true; ls.set('solo_cache_' + jogo, lista); }
+      catch (e) { lista = ls.get('solo_cache_' + jogo, []); }
+    } else lista = ls.get('solo_local', []).filter(s => s.jogo === jogo);
+    const pend = Rede.ok ? Fila.pendentes('ranking').filter(s => s.jogo === jogo).map(s => ({ ...s, pendente: true })) : [];
+    return [...lista, ...pend].sort((a, b) => b.pontos - a.pontos).slice(0, n);
+  },
+  async enviar(s) {
+    const loc = ls.get('solo_local', []); loc.push(s); ls.set('solo_local', loc.slice(-300));
+    if (!Rede.ok) return;
+    try { await Rede.postar('ranking', s); } catch (e) { Fila.add('ranking', s); }
+  }
+};
+addEventListener('online', () => Fila.enviar());
+setInterval(() => Fila.enviar(), 60000);
+
+/* ================= PESQUISA ================= */
+const PERGUNTAS = [
+  { k: 'idade', q: 'Qual a sua idade?', op: ['Até 14 anos', '15 a 25 anos', '26 a 45 anos', '46 anos ou mais'] },
+  { k: 'conhece', q: 'Você já ouviu falar sobre a contaminação do solo por metais pesados?', op: ['Sim', 'Já ouvi falar, mas não sei o significado', 'Não'] },
+  { k: 'causa', q: 'Pra você, qual é a principal causa de metais pesados no solo das cidades?', op: ['Descarte inadequado de lixo eletrônico, pilhas e baterias', 'Poluição causada por carros e indústrias', 'Agrotóxicos e fertilizantes', 'Não sei'] },
+  { k: 'descarte', q: 'Como você costuma descartar pilhas, baterias e eletrônicos velhos?', op: ['Entrego em pontos de coleta seletiva específicos', 'Descarto no lixo comum (orgânico/rejeito)', 'Descarto no lixo reciclável comum', 'Guardo em casa porque não sei onde descartar'] },
+  { k: 'preocupacao', q: 'De 1 a 5, o quanto você se preocupa com os impactos dos metais pesados na saúde?', op: ['1', '2', '3', '4', '5'], num: true }
+];
+const Pesquisa = {
+  i: 0, resp: {},
+  oferecer() {
+    const ult = ls.get('solo_pesq', null);
+    const jaRespondeu = ult && ((TOQUE) || (ult.nome === Ultimo.nome && Date.now() - ult.em < 20 * 60000));
+    if (jaRespondeu) return abrirRanking(Ultimo.jogo, true);
+    $('#pesq-painel').innerHTML = `<p class="eyebrow">Pesquisa da Mostra</p><h2>Ajuda a nossa pesquisa?</h2>
+      <p class="desc">São 5 perguntas rápidas, umas 30 segundos. Não pedimos nome: só as iniciais do ranking ficam no jogo, a resposta é anônima e entra no nosso artigo científico.</p>
+      <div class="linha-botoes"><button class="btn primario" data-nav id="bt-pesq-sim">Responder</button><button class="btn" data-nav data-back id="bt-pesq-nao">Pular</button></div>`;
+    $('#bt-pesq-sim').onclick = () => { this.i = 0; this.resp = {}; this.pergunta(); };
+    $('#bt-pesq-nao').onclick = () => abrirRanking(Ultimo.jogo, true);
+    Telas.show('pesq');
+  },
+  pergunta() {
+    const P = PERGUNTAS[this.i];
+    $('#pesq-painel').innerHTML = `<div class="progresso">${PERGUNTAS.map((_, k) => `<i class="${k <= this.i ? 'ok' : ''}"></i>`).join('')}</div>
+      <p class="eyebrow">Pergunta ${this.i + 1} de ${PERGUNTAS.length}</p><h2 style="font-size:clamp(1.3rem,4vw,1.8rem)">${esc(P.q)}</h2>
+      <div class="ops${P.num ? ' numeros' : ''}">${P.op.map((o, k) => `<button class="op" data-nav data-k="${k}">${esc(o)}</button>`).join('')}</div>
+      ${P.num ? '<p class="teclado">1 = nada preocupado · 5 = muito preocupado</p>' : ''}
+      <div class="linha-botoes"><button class="btn" data-nav data-back id="bt-pesq-pular">Pular pesquisa</button></div>`;
+    $('#pesq-painel').querySelectorAll('.op').forEach(b => b.onclick = () => this.escolher(P.op[+b.dataset.k]));
+    $('#bt-pesq-pular').onclick = () => abrirRanking(Ultimo.jogo, true);
+    Telas.show('pesq');
+  },
+  escolher(v) {
+    const P = PERGUNTAS[this.i]; this.resp[P.k] = P.num ? +v : v; som('nav');
+    this.i++;
+    if (this.i < PERGUNTAS.length) return this.pergunta();
+    const corpo = { ...this.resp, jogo: Ultimo.jogo, dispositivo: DISP };
+    ls.set('solo_pesq', { nome: Ultimo.nome, em: Date.now() });
+    if (Rede.ok) Rede.postar('respostas', corpo).catch(() => Fila.add('respostas', corpo));
+    else { const r = ls.get('solo_respostas_local', []); r.push(corpo); ls.set('solo_respostas_local', r); }
+    $('#pesq-painel').innerHTML = `<p class="eyebrow">Pesquisa da Mostra</p><h2>Valeu!</h2><p class="desc">Sua resposta entrou na pesquisa. Agora veja onde você ficou no ranking.</p>
+      <div class="linha-botoes"><button class="btn primario" data-nav data-back id="bt-pesq-rank">Ver ranking</button></div>`;
+    $('#bt-pesq-rank').onclick = () => abrirRanking(Ultimo.jogo, true);
+    Telas.show('pesq');
+  }
+};
+
+/* ================= RANKING (tela) ================= */
+let abaRank = 'descarte', destacar = false;
+async function abrirRanking(jogo, destaque = false) {
+  abaRank = jogo || abaRank; destacar = destaque;
+  Telas.show('rank', `[data-aba="${abaRank}"]`); await renderRanking();
+}
+async function renderRanking() {
+  document.querySelectorAll('.aba').forEach(b => b.classList.toggle('sel', b.dataset.aba === abaRank));
+  $('#rank-corpo').innerHTML = '<tr><td class="vazio">Carregando…</td></tr>';
+  const lista = await Ranking.top(abaRank, 10);
+  let marcou = false;
+  $('#rank-corpo').innerHTML = lista.length ? lista.map((s, i) => {
+    const eu = destacar && !marcou && Ultimo.jogo === abaRank && s.nome === Ultimo.nome && s.pontos === Ultimo.pontos;
+    if (eu) marcou = true;
+    return `<tr class="${eu ? 'voce' : ''}"><td class="pos num">${i + 1}º</td><td>${esc(s.nome)}${eu ? ' <span class="chip">você</span>' : ''}</td>
+      <td class="pts">${Number(s.pontos).toLocaleString('pt-BR')}</td><td class="disp"><span class="chip">${s.dispositivo === 'celular' ? 'CEL' : 'PC'}</span></td></tr>`;
+  }).join('') : '<tr><td class="vazio">Ninguém jogou ainda. Seja o primeiro!</td></tr>';
+  const pend = Rede.ok ? Fila.pendentes('ranking').length : 0;
+  $('#rank-status').textContent = !Rede.ok ? 'Ranking deste aparelho.'
+    : Ranking.online ? (pend ? `Ao vivo · ${pend} pontuação(ões) esperando internet` : 'Ao vivo: PC e celulares juntos.')
+    : 'Sem internet agora: mostrando o último ranking salvo.';
+}
+document.querySelectorAll('.aba').forEach(b => b.addEventListener('click', () => { abaRank = b.dataset.aba; renderRanking(); }));
+$('#bt-rank-voltar').addEventListener('click', irMenu);
+
+/* ================= MENU ================= */
+async function atualizarRecordes() {
+  const blocos = await Promise.all(Object.keys(JOGOS).map(async j => {
+    const top = await Ranking.top(j, 3);
+    return `<div class="rec-jogo"><h3>${esc(JOGOS[j].nome)}</h3>${top.length ? top.map((s, i) => `<div class="rec-l"><span>${i + 1}. ${esc(s.nome)}</span><span class="num">${Number(s.pontos).toLocaleString('pt-BR')}</span></div>`).join('') : '<p class="vazio">Sem pontuação ainda</p>'}</div>`;
+  }));
+  $('#recordes').innerHTML = blocos.join('');
+  $('#rec-status').textContent = !Rede.ok ? 'Ranking deste aparelho.' : Ranking.online ? 'Ao vivo: PC e celulares.' : 'Sem internet: último ranking salvo.';
+}
+function irMenu() { Jogo.g = null; Telas.show('menu'); atualizarRecordes(); }
+function urlSite() {
+  if (CONFIG.SITE_URL) return CONFIG.SITE_URL;
+  if (/^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname)) return location.origin + location.pathname;
+  return '';
+}
+function qrSvg(url) {
+  if (!url || typeof qrcode !== 'function') return '';
+  try { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); } catch (e) { return ''; }
+}
+document.querySelectorAll('.carta').forEach(c => c.addEventListener('click', () => Jogo.abrirInstr(c.dataset.jogo)));
+$('#bt-rank').addEventListener('click', () => abrirRanking(abaRank));
+$('#bt-qr').addEventListener('click', () => {
+  const u = urlSite();
+  $('#qr-grande').innerHTML = qrSvg(u) || '<p style="color:#17130e">Coloque o jogo online pra gerar o QR code.</p>';
+  $('#qr-link').textContent = u; Telas.show('qr');
+});
+$('#bt-qr-voltar').addEventListener('click', irMenu);
+$('#bt-tela').addEventListener('click', () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen().catch(() => {}); else if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); });
+$('#bt-comecar').addEventListener('click', () => Jogo.iniciar());
+$('#bt-instr-voltar').addEventListener('click', irMenu);
+$('#bt-continuar').addEventListener('click', () => Jogo.pausar(false));
+$('#bt-sair').addEventListener('click', () => { Jogo.pausar(false); irMenu(); });
+$('#hud').addEventListener('click', e => { if (e.target.closest('#bt-pausa')) Jogo.pausar(true); });
+$('#bt-salvar').addEventListener('click', () => Nome.abrir());
+$('#bt-denovo').addEventListener('click', () => Jogo.iniciar());
+$('#bt-fim-menu').addEventListener('click', irMenu);
+
+/* toque nos botões virtuais */
+document.querySelectorAll('#toque button').forEach(b => {
+  const k = b.dataset.k;
+  const on = e => { e.preventDefault(); Input.touch[k] = true; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (er) {} };
+  const off = () => { Input.touch[k] = false; b.classList.remove('on'); };
+  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
+/* toque direto no canvas (Jardim Limpador) */
+cv.addEventListener('pointerdown', e => {
+  const g = Jogo.g; if (!g || !g.toque || Jogo.pausado) return;
+  const r = cv.getBoundingClientRect();
+  g.toque((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H);
+});
+
+/* ================= LAÇO PRINCIPAL ================= */
+let ultimoT = performance.now(), ultimoRec = 0;
+function laco(t) {
+  const dt = Math.min(1 / 30, Math.max(0, (t - ultimoT) / 1000)); ultimoT = t;
+  Input.update();
+  if (Telas.atual === 'jogo') Jogo.frame(dt);
+  else if (Telas.atual === 'nome') Nome.handle();
+  else Nav.handle();
+  const parado = performance.now() - Input.ativoEm;
+  if (Telas.atual !== 'menu' && Telas.atual !== 'jogo' && parado > 45000) irMenu();
+  if (Telas.atual === 'jogo' && Jogo.pausado && parado > 60000) { Jogo.pausar(false); irMenu(); }
+  if (Telas.atual === 'menu' && t - ultimoRec > 20000) { ultimoRec = t; atualizarRecordes(); }
+  if (Telas.atual === 'menu') { const ps = $('#pad-status'); const txtPad = Input.padOn ? 'Controle conectado' : 'Teclado: setas, Espaço e X'; if (ps.textContent !== txtPad) { ps.textContent = txtPad; ps.classList.toggle('pad-ok', Input.padOn); } }
+  requestAnimationFrame(laco);
+}
+
+/* ================= INÍCIO ================= */
+Input.init();
+iniciarSprites();
+(function montarQrMenu() {
+  const u = urlSite(), svg = qrSvg(u);
+  if (svg && !TOQUE) { $('#qr-mini').innerHTML = svg; $('#qr-url').textContent = u.replace(/^https?:\/\//, ''); $('#qr-box').hidden = false; }
+})();
+Fila.enviar();
+atualizarRecordes();
+Telas.show('menu');
+requestAnimationFrame(laco);
+</script>
+</body>
+</html>
