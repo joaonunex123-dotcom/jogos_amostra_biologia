@@ -1,4 +1,4 @@
-# Solo Limpo
+# Solo Limpo — jogos da Mostra
 
 Três jogos rápidos sobre metais pesados no solo urbano, feitos para o stand da III Mostra Científica 2026 da ETEC Antônio Furlan (Barueri-SP).
 
