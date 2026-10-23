@@ -1982,7 +1982,7 @@ const Pesquisa = {
   i: 0, resp: {},
   oferecer() {
     const ult = ls.get('solo_pesq', null);
-    const jaRespondeu = ult && ((TOQUE) || (ult.nome === Ultimo.nome && Date.now() - ult.em < 20 * 60000));
+    const jaRespondeu = TOQUE && ult && Date.now() - ult.em < 10 * 60000;
     if (jaRespondeu) return this.encerrar(true);
     $('#pesq-painel').innerHTML = `<p class="eyebrow" id="pesq-pos">Pontuação salva</p><h2>Ajuda a nossa pesquisa?</h2>
       <p class="desc">São 5 perguntas rápidas, umas 30 segundos. Não pedimos nome: só as iniciais do ranking ficam no jogo, a resposta é anônima e entra no nosso artigo científico.</p>
