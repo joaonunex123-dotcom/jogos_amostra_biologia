@@ -113,6 +113,24 @@ p{margin:0}
 .ciencia{border-left:3px solid var(--folha);padding:8px 12px;background:var(--solo-3);border-radius:0 6px 6px 0;font-size:.95rem}
 .teclado{font-size:.82rem;color:var(--apagado)}
 
+/* INSTRUÇÕES EM TELA CHEIA */
+.instr{display:flex;flex-direction:column;gap:clamp(8px,1.6vh,14px);padding-block:clamp(10px,2vh,20px);max-width:1120px;margin:0 auto;width:100%}
+.instr-topo{display:flex;align-items:center;gap:18px}
+.instr-topo img{width:68px;height:68px;flex:0 0 68px;object-fit:contain;image-rendering:pixelated;background:var(--solo-2);border:2px solid var(--linha);border-radius:10px;padding:10px}
+.instr-topo h2{font-size:clamp(2.1rem,5.5vw,3.2rem)}
+.instr-obj{font:700 clamp(1.25rem,2.8vw,1.65rem)/1.22 var(--display);color:var(--cadmio);max-width:46ch;text-wrap:balance}
+.passos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;counter-reset:passo}
+.passos li{display:grid;grid-template-columns:58px minmax(0,1fr);gap:14px;align-items:center;background:var(--solo-2);border:2px solid var(--linha);border-radius:10px;padding:10px 14px;font-size:clamp(1rem,1.7vw,1.15rem);line-height:1.32}
+.passos .ic{width:58px;height:58px;display:grid;place-items:center;background:var(--solo-3);border-radius:8px;position:relative;font:700 1.3rem/1 var(--display);color:var(--texto)}
+.passos .ic img{height:40px;width:auto;max-width:48px;object-fit:contain;image-rendering:pixelated}
+.passos .ic::before{counter-increment:passo;content:counter(passo);position:absolute;top:-9px;left:-9px;width:24px;height:24px;border-radius:50%;background:var(--cadmio);color:var(--solo);font:700 .85rem/24px var(--display);text-align:center}
+.passos b{color:var(--texto)}
+.passos li span{min-width:0;color:var(--apagado)}
+.instr-rodape{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px 24px}
+.instr .controles{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:1.05rem}
+.instr .k{font-size:1rem;min-width:2.1em;height:2.1em}
+@media (max-width:800px){.passos{grid-template-columns:minmax(0,1fr)}.instr-rodape{position:sticky;bottom:0;background:var(--solo);padding-block:10px;z-index:2;border-top:1px solid var(--linha)}}
+
 /* JOGO */
 #jogo{gap:8px;padding-block:8px}
 #hud{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;font-family:var(--display);min-height:28px}
@@ -320,18 +338,22 @@ body.toque #hud .h small{font-size:.6rem}
   </section>
 
   <!-- INSTRUÇÕES -->
-  <section class="tela rolavel centro" id="instr" hidden>
-    <div class="painel">
-      <p class="eyebrow" id="instr-tipo"></p>
-      <h2 id="instr-titulo"></h2>
-      <p class="desc" id="instr-desc"></p>
-      <ul class="controles" id="instr-ctrl"></ul>
-      <p class="teclado so-pc">Teclado: setas pra mover, Espaço = A, X = B, Esc = pausa.</p>
-      <p class="ciencia" id="instr-ciencia"></p>
-      <div class="linha-botoes">
-        <button class="btn primario" data-nav id="bt-comecar">Começar</button>
-        <button class="btn" data-nav data-back id="bt-instr-voltar">Voltar</button>
+  <section class="tela rolavel" id="instr" hidden>
+    <div class="instr">
+      <header class="instr-topo">
+        <img id="instr-icone" alt="">
+        <div><p class="eyebrow" id="instr-tipo"></p><h2 id="instr-titulo"></h2></div>
+      </header>
+      <p class="instr-obj" id="instr-desc"></p>
+      <ol class="passos" id="instr-passos"></ol>
+      <div class="instr-rodape">
+        <ul class="controles" id="instr-ctrl"></ul>
+        <div class="linha-botoes">
+          <button class="btn primario grande" data-nav id="bt-comecar">Começar</button>
+          <button class="btn" data-nav data-back id="bt-instr-voltar">Voltar</button>
+        </div>
       </div>
+      <p class="ciencia" id="instr-ciencia"></p>
     </div>
   </section>
 
@@ -1133,8 +1155,8 @@ function desenhaParticulasCam(ctx, g, cam) {
 
 /* ================= JOGO 3: JARDIM LIMPADOR (fitorremediação) ================= */
 const PLANTAS = {
-  gir: { nome: 'Girassol', custo: 2, papel: 'puxa o metal', spr: 'gir' },
-  vet: { nome: 'Vetiver', custo: 1, papel: 'segura o metal', spr: 'vet' }
+  gir: { nome: 'Girassol', custo: 2, papel: 'aspira o metal', spr: 'gir' },
+  vet: { nome: 'Vetiver', custo: 1, papel: 'muro de raízes', spr: 'vet' }
 };
 function criarFito() {
   const C = 12, Lh = 6, CEL = 30, OX = 60, OY = 34, N = C * Lh;
@@ -1148,9 +1170,11 @@ function criarFito() {
     { c: 0, l: 4, ini: 45, taxa: .24, lado: 'esq' }
   ];
   const g = { pontos: 0, tempo: 90, sementes: 6, regen: 0, tipo: 'gir', cur: { c: 4, l: 2 }, saude: 100, absorvido: 0, colhidas: 0, plantadas: 0,
-    fim: false, parts: [], rep: 0, t: 0, dicas: {} };
+    fim: false, parts: [], rep: 0, t: 0, dicas: {}, tut: 0, tutT: 0 };
   const MAX_SEM = 10, CHEIA = 1.2, K = .5;
-  toast('As fábricas soltam metal no solo e ele se espalha. Proteja o parque até o tempo acabar!', 'info', 3800);
+  const TUT = [{ c: 1, l: 0, tipo: 'gir' }, null, { c: 1, l: 1, tipo: 'vet' }, null];
+  g.cur = { c: 1, l: 0 };
+  for (const [c, l, v] of [[0, 0, .9], [1, 0, .55], [0, 1, .5], [2, 0, .25], [1, 1, .3], [0, 2, .2]]) cont[id(c, l)] = v;
   const decorrido = () => 90 - g.tempo;
   const ativa = f => decorrido() >= f.ini;
   const bloqueada = i => planta[i] && planta[i].tipo === 'vet';
@@ -1158,29 +1182,29 @@ function criarFito() {
     const i = id(g.cur.c, g.cur.l), pl = planta[i];
     if (fabricas.some(f => id(f.c, f.l) === i)) { if (toastLivre()) toast('Aqui sai o metal da fábrica. Plante nas casas em volta.', 'aviso', 2400); som('erro'); return; }
     if (parque.has(i)) { if (toastLivre()) toast('Esse é o parque: as crianças brincam aqui. Plante em volta pra proteger.', 'aviso', 2600); som('erro'); return; }
-    if (pl) {
-      if (pl.tipo === 'gir' && pl.carga >= CHEIA) {
-        planta[i] = null; g.colhidas++; g.pontos += 300; som('ok');
-        g.parts.push({ x: OX + g.cur.c * CEL + 15, y: OY + g.cur.l * CEL, t: 0, txt: '+300', cor: '#f0c03a' });
-        if (!g.dicas.colheu) { g.dicas.colheu = 1; toast('Planta cheia de metal colhida. Ela vai pro descarte de resíduo perigoso.', 'info', 3200); }
-      } else som('erro');
-      return;
-    }
+    if (g.tut === 1 || g.tut === 3) return;
+    if (g.tut === 0 || g.tut === 2) g.tipo = TUT[g.tut].tipo;
+    if (pl) { som('erro'); if (toastLivre()) toast('Já tem uma planta aqui. Escolha outra casa.', 'aviso', 1600); return; }
     const P = PLANTAS[g.tipo];
     if (g.sementes < P.custo) { som('erro'); if (toastLivre()) toast(`Faltam sementes. ${P.nome} custa ${P.custo}.`, 'aviso', 1800); return; }
     g.sementes -= P.custo; g.plantadas++; planta[i] = { tipo: g.tipo, carga: 0, t: 0 }; som('planta');
-    if (g.tipo === 'gir' && !g.dicas.gir) { g.dicas.gir = 1; toast('Girassol é hiperacumulador: puxa o metal do solo pras folhas. Quando encher, colha com A.', 'info', 3600); }
-    if (g.tipo === 'vet' && !g.dicas.vet) { g.dicas.vet = 1; toast('Vetiver estabiliza: a raiz segura o metal e ele para de se espalhar.', 'info', 3400); }
+    if (g.tut === 0) { g.tut = 1; g.tutT = 0; }
+    else if (g.tut === 2) { g.tut = 3; g.tutT = 0; }
   }
   g._estado = { cont, planta, parque, fabricas, C, Lh, CHEIA: 1.2 };
   g.toque = (x, y) => {
-    if (y > 230) { g.tipo = x < W / 2 ? 'gir' : 'vet'; som('nav'); return; }
+    if (y > 230) { if (g.tut < 0) { g.tipo = x < W / 2 ? 'gir' : 'vet'; som('nav'); } return; }
     const c = Math.floor((x - OX) / CEL), l = Math.floor((y - OY) / CEL);
     if (c < 0 || c >= C || l < 0 || l >= Lh) return;
     g.cur = { c, l }; acao();
   };
   g.update = dt => {
-    g.t += dt; g.tempo -= dt;
+    g.t += dt;
+    if (g.tut >= 0) {
+      g.tutT += dt;
+      if (g.tut === 1 && g.tutT > 4) { g.tut = 2; g.tutT = 0; g.cur = { c: TUT[2].c, l: TUT[2].l }; g.tipo = 'vet'; }
+      if (g.tut === 3 && g.tutT > 2.2) { g.tut = -1; g.tipo = 'gir'; }
+    } else g.tempo -= dt;
     if (g.tempo <= 0) { g.tempo = 0; g.pontos += Math.round(g.saude) * 10; g.fim = true; return; }
     const I = Input;
     const dir = I.held.left ? [-1, 0] : I.held.right ? [1, 0] : I.held.up ? [0, -1] : I.held.down ? [0, 1] : null;
@@ -1190,12 +1214,13 @@ function criarFito() {
       else { g.rep -= dt; if (g.rep <= 0) { g.rep = .085; g.cur.c = clamp(g.cur.c + dir[0], 0, C - 1); g.cur.l = clamp(g.cur.l + dir[1], 0, Lh - 1); } }
     }
     if (I.pressed.a) acao();
-    if (I.pressed.b) { g.tipo = g.tipo === 'gir' ? 'vet' : 'gir'; som('nav'); }
+    if (I.pressed.b && g.tut < 0) { g.tipo = g.tipo === 'gir' ? 'vet' : 'gir'; som('nav'); }
     g.regen += dt; if (g.regen >= 2.2) { g.regen = 0; g.sementes = Math.min(MAX_SEM, g.sementes + 1); }
+    if (g.tut === 0 || g.tut === 2) { particulas(g, dt); return; }
 
     const fator = 1 + decorrido() / 90;
     for (const f of fabricas) {
-      if (!ativa(f)) continue;
+      if (!ativa(f) || (g.tut >= 0 && f.ini > 0)) continue;
       if (!f.avisou && f.ini > 0) { f.avisou = 1; toast('Uma nova fábrica começou a soltar metal!', 'perigo', 2600); }
       const i = id(f.c, f.l); cont[i] = Math.min(1, cont[i] + f.taxa * fator * dt);
     }
@@ -1210,8 +1235,15 @@ function criarFito() {
       const pl = planta[i]; if (!pl) continue;
       pl.t += dt;
       if (pl.tipo === 'gir' && pl.carga < CHEIA) {
-        const a = Math.min(cont[i], .24 * dt, CHEIA - pl.carga);
+        const a = Math.min(cont[i], .24 * dt * (g.tut >= 0 ? 1.6 : 1), CHEIA - pl.carga);
         cont[i] -= a; pl.carga += a; g.absorvido += a; g.pontos += a * 120;
+      } else if (pl.tipo === 'gir') {
+        pl.cheiaT = (pl.cheiaT || 0) + dt;
+        if (pl.cheiaT > .6) {
+          planta[i] = null; g.colhidas++; g.pontos += 300; g.sementes = Math.min(MAX_SEM, g.sementes + 2.5); som('ok');
+          g.parts.push({ x: OX + (i % C) * CEL + 15, y: OY + Math.floor(i / C) * CEL, t: 0, txt: '+300 · +2,5 sementes', cor: '#f0c03a' });
+          if (!g.dicas.colheu && toastLivre()) { g.dicas.colheu = 1; toast('Girassol cheio foi colhido e devolveu 2,5 sementes. A planta vai pro descarte de resíduo perigoso.', 'info', 3200); }
+        }
       } else if (pl.tipo === 'vet') {
         const a = Math.min(cont[i], .06 * dt); cont[i] -= a; g.absorvido += a; g.pontos += a * 120;
       }
@@ -1243,7 +1275,21 @@ function criarFito() {
         if (c === 9 && l === 4) { spr(ctx, 'pinho_t', x + 4, y - 15, 1); spr(ctx, 'pinho_b', x + 4, y + 6, 1); }
       }
     }
-    txt(ctx, `Parque ${Math.ceil(g.saude)}%`, OX + 8 * CEL + 15, OY + 6 * CEL + 3, { tam: 9, al: 'center', cor: g.saude < 40 ? '#e0573f' : '#86c95a' });
+    for (let i = 0; i < N; i++) {
+      if (cont[i] < .1) continue;
+      const c = i % C, l = Math.floor(i / C); let j = -1, menor = cont[i] - .03;
+      for (const [dc, dl] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cc = c + dc, ll = l + dl; if (cc < 0 || cc >= C || ll < 0 || ll >= Lh) continue; const k = id(cc, ll); if (cont[k] < menor) { menor = cont[k]; j = k; } }
+      if (j < 0) continue;
+      const lim = bloqueada(j) || bloqueada(i) ? .42 : .95, x0 = OX + c * CEL + 15, y0 = OY + l * CEL + 15, x1 = OX + (j % C) * CEL + 15, y1 = OY + Math.floor(j / C) * CEL + 15;
+      for (let k = 0; k < 2; k++) {
+        const ph = ((g.t * .8 + (i * .37) % 1 + k * .5) % 1) * lim;
+        ctx.fillStyle = `rgba(226,140,245,${Math.min(.95, cont[i] * 1.3) * (1 - ph * .5)})`;
+        ctx.fillRect(Math.round(x0 + (x1 - x0) * ph) - 2, Math.round(y0 + (y1 - y0) * ph) - 2, 4, 4);
+      }
+    }
+    let perigo = false; for (const i of parque) if (cont[i] > .06) perigo = true;
+    if (perigo && Math.floor(g.t * 4) % 2) { ctx.strokeStyle = '#e0573f'; ctx.lineWidth = 3; ctx.strokeRect(OX + 7 * CEL - 1, OY + 4 * CEL - 1, 3 * CEL + 2, 2 * CEL + 2); ctx.lineWidth = 1; }
+    txt(ctx, perigo ? `PERIGO! Parque ${Math.ceil(g.saude)}%` : `Parque ${Math.ceil(g.saude)}%`, OX + 8 * CEL + 15, OY + 6 * CEL + 3, { tam: 9, al: 'center', cor: perigo || g.saude < 40 ? '#e0573f' : '#86c95a' });
     for (const f of fabricas) {
       const ok = ativa(f), y = OY + f.l * CEL, x = f.lado === 'esq' ? OX - 40 : OX + C * CEL + 6;
       const chx = x + (f.lado === 'esq' ? 4 : 24);
@@ -1269,10 +1315,14 @@ function criarFito() {
         const cheia = pl.carga >= CHEIA;
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + 25, 22, 3);
         ctx.fillStyle = cheia ? (Math.floor(g.t * 6) % 2 ? '#f0c03a' : '#c457d6') : '#c457d6'; ctx.fillRect(x + 4, y + 25, 22 * pl.carga / CHEIA, 3);
-        if (cheia) txt(ctx, 'COLHER', x + 15, y - 1, { tam: 8, al: 'center', cor: '#f0c03a' });
+        if (cheia) { const k = (pl.cheiaT || 0) / .6; ctx.fillStyle = `rgba(255,240,170,${.6 * k})`; ctx.fillRect(x + 2, y + 2, CEL - 4, CEL - 4); }
       }
     }
     const cx = OX + g.cur.c * CEL, cy = OY + g.cur.l * CEL;
+    if (!planta[id(g.cur.c, g.cur.l)] && !parque.has(id(g.cur.c, g.cur.l)) && g.tut !== 1 && g.tut !== 3) {
+      if (g.tipo === 'gir') { ctx.fillStyle = 'rgba(240,192,58,.22)'; ctx.fillRect(cx + 2, cy + 2, CEL - 4, CEL - 4); }
+      else { ctx.fillStyle = '#5a3a1e'; ctx.fillRect(cx, cy, CEL, 4); ctx.fillRect(cx, cy + CEL - 4, CEL, 4); ctx.fillRect(cx, cy, 4, CEL); ctx.fillRect(cx + CEL - 4, cy, 4, CEL); }
+    }
     if (!planta[id(g.cur.c, g.cur.l)] && !parque.has(id(g.cur.c, g.cur.l))) { const eg = g.tipo === 'gir' ? 1.35 : 1.6; ctx.globalAlpha = .4; spr(ctx, g.tipo, cx + 15 - SPR[g.tipo].width * eg / 2, cy + 27 - SPR[g.tipo].height * eg, eg); ctx.globalAlpha = 1; }
     ctx.strokeStyle = Math.floor(g.t * 4) % 2 ? '#f0c03a' : '#f2ead7'; ctx.lineWidth = 2; ctx.strokeRect(cx + 1, cy + 1, CEL - 2, CEL - 2); ctx.lineWidth = 1;
     const by = 236;
@@ -1285,9 +1335,25 @@ function criarFito() {
       txt(ctx, `${P.custo} semente${P.custo > 1 ? 's' : ''} · ${P.papel}`, x0 + 36, by + 17, { tam: 8, cor: '#ab9f88' });
     }
     txt(ctx, TOQUE ? 'Toque no solo pra plantar' : 'B troca a planta', OX, 221, { tam: 8, cor: '#ab9f88' });
+    if (g.tut >= 0) {
+      const alvo = TUT[g.tut];
+      if (alvo) {
+        const ax = OX + alvo.c * CEL, ay = OY + alvo.l * CEL, pis = Math.floor(g.t * 5) % 2;
+        ctx.strokeStyle = pis ? '#f0c03a' : '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(ax - 1, ay - 1, CEL + 2, CEL + 2); ctx.lineWidth = 1;
+        const by2 = ay + CEL + 6 + Math.abs(Math.sin(g.t * 6)) * 5;
+        ctx.fillStyle = '#f0c03a'; ctx.beginPath(); ctx.moveTo(ax + 15, by2); ctx.lineTo(ax + 7, by2 + 10); ctx.lineTo(ax + 23, by2 + 10); ctx.fill();
+        ctx.fillRect(ax + 12, by2 + 10, 6, 10);
+      }
+      const msg = [TOQUE ? 'Toque na casa piscando pra plantar um GIRASSOL' : 'Aperte A pra plantar um GIRASSOL na casa piscando',
+        'O girassol ASPIRA o metal. Cheio, é colhido sozinho!',
+        TOQUE ? 'Agora toque na casa piscando: VETIVER faz um MURO' : 'Agora aperte A: o VETIVER faz um MURO de raízes',
+        'Pronto! Proteja o parque das crianças por 90 segundos!'][g.tut];
+      ctx.fillStyle = 'rgba(23,19,14,.92)'; ctx.fillRect(40, 3, W - 80, 26); ctx.strokeStyle = '#f0c03a'; ctx.lineWidth = 2; ctx.strokeRect(41, 4, W - 82, 24); ctx.lineWidth = 1;
+      txt(ctx, msg, W / 2, 10, { tam: 11, al: 'center', cor: '#f0c03a' });
+    }
     desenhaParticulas(ctx, g);
   };
-  g.hud = () => [['Pontos', Math.round(g.pontos)], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 10], ['Sementes', `${g.sementes}/${MAX_SEM}`], ['Parque', Math.ceil(g.saude) + '%', g.saude < 40]];
+  g.hud = () => [['Pontos', Math.round(g.pontos)], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 10], ['Sementes', `${Math.floor(g.sementes)}/${MAX_SEM}`], ['Parque', Math.ceil(g.saude) + '%', g.saude < 40]];
   g.resumo = () => [['Plantas colocadas', g.plantadas], ['Girassóis colhidos', g.colhidas], ['Metal retirado do solo', Math.round(g.absorvido * 10) + ' kg*'], ['Saúde do parque', Math.ceil(g.saude) + '%']];
   g.licao = () => 'Fitorremediação usa plantas pra limpar o solo. É barata e funciona bem em praças e parques, mas é lenta. *Unidade de jogo, não é medida real.';
   g.titulo = () => g.saude <= 0 ? 'O metal chegou no parque' : 'Parque protegido!';
@@ -1300,18 +1366,43 @@ function criarFito() {
 /* ================= CATÁLOGO DE JOGOS ================= */
 const JOGOS = {
   descarte: { nome: 'Descarte Certo', tipo: 'Arcade · 60 segundos', criar: criarDescarte,
-    desc: 'Os itens caem do alto. Leve cada um pra lixeira certa. Pilha ou eletrônico no lixo errado vira uma mancha de metal no solo, e com três manchas o jogo acaba. Acertos seguidos multiplicam os pontos.',
-    ctrl: [['◀ ▶', 'escolher a lixeira'], ['▼', 'acelerar a queda']],
+    obj: 'Coloque cada lixo na lixeira certa antes que ele caia.',
+    passos: [
+      ['pilha', 'Um item cai do alto. O <b>nome dele</b> aparece logo embaixo.'],
+      ['◀ ▶', 'Mova o item pra cima da <b>lixeira certa</b> antes que ele chegue lá embaixo.'],
+      ['reciclar', '<b style="color:#e8913a">Laranja</b>: pilha, bateria, celular, lâmpada e termômetro, que têm metal pesado. <b style="color:#4a90d9">Azul</b>: plástico, metal e papel. <b style="color:#86c95a">Verde</b>: restos de comida.'],
+      ['⚠', 'Item perigoso na lixeira errada vira uma <b>mancha de metal no solo</b>. Com <b>3 manchas</b>, o jogo acaba.'],
+      ['×4', 'Acertos seguidos <b>multiplicam os pontos</b>, até ×4. Segure <b>▼</b> pro item cair mais rápido e dar tempo de pegar mais.']
+    ],
+    ctrl: [['◀ ▶', 'mover o item'], ['▼', 'cair mais rápido']],
+    ctrlToque: [['◀ ▶', 'mover o item'], ['▼', 'cair mais rápido']],
     ciencia: 'No nosso questionário, 57% das pessoas descartam pilhas e eletrônicos no lixo comum ou no reciclável comum. O certo é o ponto de coleta.',
     toque: { dir: ['left', 'right', 'down'], a: '', b: '' } },
   plataforma: { nome: 'Patrulha Barueri', tipo: 'Plataforma · 3 fases', criar: criarPlataforma,
-    desc: 'Atravesse a praça, a avenida e a zona industrial. Pegue o lixo do caminho e passe nas lixeiras certas no fim de cada fase. Pule em cima das nuvens de metal ou jogue sementes nelas.',
-    ctrl: [['◀ ▶', 'andar'], ['A', 'pular'], ['B', 'jogar semente']],
+    obj: 'Atravesse Barueri recolhendo o lixo e chegue na bandeira o mais rápido possível.',
+    passos: [
+      ['et', 'São <b>3 fases</b>: Praça, Avenida e Zona Industrial. Chegue na <b>bandeira laranja</b> no fim de cada uma.'],
+      ['garrafa', 'Encoste no <b>lixo</b> espalhado pelo caminho pra recolher. Ele vai pra sua mochila.'],
+      ['lata', 'No fim da fase, passe pelas <b>3 lixeiras</b> pra entregar o lixo. Item perigoso que você não entregar tira pontos.'],
+      ['slime1_Pb', 'Gosmas e fantasmas são <b>metais pesados</b>. Pule em cima ou jogue <b>sementes</b> neles. Encostar tira 1 das suas <b>3 vidas</b>.'],
+      ['tabua_e', 'Na Zona Industrial tem <b>valas tóxicas</b>. Use as <b>plataformas que se mexem</b> e os elevadores pra atravessar.'],
+      ['flag_l1', 'Quanto <b>mais rápido</b> terminar, mais pontos: cada segundo que sobra vale 60. A bandeira verde no meio da fase é onde você volta se morrer.']
+    ],
+    ctrl: [['◀ ▶', 'andar'], ['A', 'pular (segure pra ir mais alto)'], ['B', 'jogar semente']],
+    ctrlToque: [['◀ ▶', 'andar'], ['A', 'pular (segure pra ir mais alto)'], ['B', 'jogar semente']],
     ciencia: 'Indústria, trânsito e lixo descartado errado são as principais fontes de metal pesado no solo urbano.',
     toque: { dir: ['left', 'right'], a: 'Pular', b: 'Semente' }, toastTopo: true },
   fito: { nome: 'Jardim Limpador', tipo: 'Estratégia · 90 segundos', criar: criarFito,
-    desc: 'Fábricas soltam metal no solo e ele se espalha. Plante pra limpar e segurar a contaminação longe do parque das crianças até o tempo acabar.',
-    ctrl: [['✚', 'mover o cursor'], ['A', 'plantar ou colher'], ['B', 'trocar a planta']],
+    obj: 'Use plantas pra impedir que o metal das fábricas chegue no parque das crianças.',
+    passos: [
+      ['perigo', 'As <b>fábricas</b> soltam metal pesado no solo. Ele aparece em <b style="color:#c457d6">roxo</b> e vai escorrendo até o <b>parque</b>.'],
+      ['gir', '<b>Girassol</b> aspira o metal da casa onde está. Quando enche, é <b>colhido sozinho</b>, dá +300 pontos e <b>devolve 2,5 sementes</b>.'],
+      ['vet', '<b>Vetiver</b> é um muro de raízes: <b>segura o metal</b> e ele quase não passa pra frente.'],
+      ['semente', 'Cada planta gasta <b>sementes</b> (girassol 2, vetiver 1). Elas voltam sozinhas com o tempo.'],
+      ['90s', 'Novas fábricas ligam no meio do jogo. Aguente <b>90 segundos</b> com o parque saudável. No começo o jogo <b>mostra onde plantar</b>.']
+    ],
+    ctrl: [['✚', 'mover o cursor'], ['A', 'plantar'], ['B', 'trocar a planta']],
+    ctrlToque: [['☝', 'toque no solo pra plantar'], ['☝', 'toque nas plantas de baixo pra trocar']],
     ciencia: 'Girassol é hiperacumulador: puxa o metal pras folhas. Vetiver é estabilizador: a raiz segura o metal no lugar. Isso é fitorremediação.',
     toque: { dir: ['left', 'right', 'up', 'down'], a: 'Plantar', b: 'Trocar' } }
 };
@@ -1322,10 +1413,15 @@ const Jogo = {
   id: null, g: null, pausado: false, hudAntes: '',
   abrirInstr(id) {
     this.id = id; const d = JOGOS[id];
-    $('#instr-tipo').textContent = d.tipo; $('#instr-titulo').textContent = d.nome; $('#instr-desc').textContent = d.desc;
+    $('#instr-tipo').textContent = d.tipo; $('#instr-titulo').textContent = d.nome; $('#instr-desc').textContent = d.obj;
     $('#instr-ciencia').textContent = d.ciencia;
-    $('#instr-ctrl').innerHTML = d.ctrl.map(([k, t]) => `<li><span class="k ${k === 'A' ? 'k-a' : k === 'B' ? 'k-b' : 'k-d'}">${k}</span>${esc(t)}</li>`).join('')
-      + (TOQUE && id === 'fito' ? '<li><span class="k k-d">☝</span>ou toque direto no solo</li>' : '');
+    const ic = SPR[SPR_JOGO[id]]; $('#instr-icone').src = ic ? ic.toDataURL() : '';
+    $('#instr-passos').innerHTML = d.passos.map(([icone, texto]) => {
+      const sp = SPR[icone];
+      return `<li><div class="ic">${sp ? `<img alt="" src="${sp.toDataURL()}">` : esc(icone)}</div><span>${texto}</span></li>`;
+    }).join('');
+    const ctrl = TOQUE ? d.ctrlToque : d.ctrl;
+    $('#instr-ctrl').innerHTML = ctrl.map(([k, t]) => `<li><span class="k ${k === 'A' ? 'k-a' : k === 'B' ? 'k-b' : 'k-d'}">${k}</span>${esc(t)}</li>`).join('');
     Telas.show('instr');
   },
   iniciar() {
