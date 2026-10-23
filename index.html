@@ -52,7 +52,9 @@ p{margin:0}
 .btn:hover{border-color:var(--apagado)}
 .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0d0a07}
 .btn.primario{background:var(--folha);border-color:var(--folha);color:#12210b}
-.btn:focus-visible,.carta:focus-visible,.op:focus-visible,.aba:focus-visible{outline:3px solid var(--cadmio);outline-offset:3px}
+.btn:focus-visible,.carta:focus-visible,.op:focus-visible,.aba:focus-visible,.nav-foco{outline:3px solid var(--cadmio)!important;outline-offset:3px}
+.carta.nav-foco{border-color:var(--cadmio);background:var(--solo-3);transform:translateY(-3px)}
+.op.nav-foco{border-color:var(--cadmio);background:var(--solo-2)}
 .linha-botoes{display:flex;flex-wrap:wrap;gap:12px}
 
 /* Teclas de controle */
@@ -571,6 +573,12 @@ const Input = {
       if (b(0)) pad.a = 1;
       if (b(1) || b(2)) pad.b = 1;
       if (b(9) || b(8)) pad.start = 1;
+      if (gp.mapping !== 'standard') {
+        if (ax.length > 7) { if (ax[6] < -.5) pad.left = 1; if (ax[6] > .5) pad.right = 1; if (ax[7] < -.5) pad.up = 1; if (ax[7] > .5) pad.down = 1; }
+        const hat = ax[9];
+        if (hat !== undefined && hat >= -1.05 && hat <= 1.05) { const dir = Math.round((hat + 1) / 2 * 7); if ([7, 0, 1].includes(dir)) pad.up = 1; if ([1, 2, 3].includes(dir)) pad.right = 1; if ([3, 4, 5].includes(dir)) pad.down = 1; if ([5, 6, 7].includes(dir)) pad.left = 1; }
+        if (b(7) || b(6)) pad.start = 1;
+      }
     }
     for (const n of this.NOMES) {
       const h = !!(this.kb[n] || pad[n] || this.touch[n] || this.tap[n]);
@@ -595,26 +603,37 @@ const Telas = {
 };
 const Nav = {
   itens() { return [...document.querySelectorAll(`#${Telas.atual} [data-nav]`)].filter(el => !el.disabled && el.offsetParent !== null); },
+  marcar(el, rolar = true) {
+    document.querySelectorAll('.nav-foco').forEach(e => e.classList.remove('nav-foco'));
+    if (!el) return; el.classList.add('nav-foco'); el.focus({ preventScroll: true });
+    if (rolar) try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  },
   reset(foco) {
+    document.querySelectorAll('.nav-foco').forEach(e => e.classList.remove('nav-foco'));
     if (TOQUE && !Input.padOn) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
     const it = this.itens(); if (!it.length) return;
     const alvo = foco ? it.find(e => e.matches(foco)) : null;
-    (alvo || it[0]).focus({ preventScroll: TOQUE });
+    this.marcar(alvo || it[0], !TOQUE);
   },
+  atual(it) { const a = document.activeElement; return it.includes(a) ? a : null; },
   move(d) {
     const it = this.itens(); if (!it.length) return;
-    let i = it.indexOf(document.activeElement);
+    let i = it.indexOf(this.atual(it));
     i = i < 0 ? 0 : (i + d + it.length) % it.length;
-    it[i].focus(); it[i].scrollIntoView({ block: 'nearest' }); som('nav');
+    this.marcar(it[i]); som('nav');
   },
   handle() {
     const p = Input.pressed;
+    if (!(p.up || p.left || p.down || p.right || p.a || p.b)) return;
+    const it = this.itens();
+    if (it.length && !this.atual(it) && (p.up || p.left || p.down || p.right || p.a)) { this.marcar(it[0]); som('nav'); return; }
     if (p.up || p.left) this.move(-1);
     if (p.down || p.right) this.move(1);
-    if (p.a) { const el = document.activeElement; if (el && el.matches('[data-nav]') && el.offsetParent !== null) { el.click(); return; } }
+    if (p.a) { const el = this.atual(it); if (el) { el.classList.remove('nav-foco'); el.click(); return; } }
     if (p.b) { const v = [...document.querySelectorAll(`#${Telas.atual} [data-back]`)].find(e => e.offsetParent !== null); if (v) v.click(); }
   }
 };
+document.addEventListener('pointerdown', () => document.querySelectorAll('.nav-foco').forEach(e => e.classList.remove('nav-foco')), true);
 
 /* ================= TOAST ================= */
 let toastTimer = 0;
@@ -1472,7 +1491,7 @@ function criarFito() {
     if (pl) { som('erro'); if (toastLivre()) toast('Já tem uma planta aqui. Escolha outra casa.', 'aviso', 1600); return; }
     const P = PLANTAS[g.tipo];
     if (g.sementes < P.custo) { som('erro'); if (toastLivre()) toast(`Faltam sementes. ${P.nome} custa ${P.custo}.`, 'aviso', 1800); return; }
-    g.sementes -= P.custo; g.plantadas++; planta[i] = { tipo: g.tipo, carga: 0, t: 0 }; som('planta');
+    g.sementes -= P.custo; g.plantadas++; planta[i] = { tipo: g.tipo, carga: 0, t: 0, vida: 1 }; som('planta');
     if (g.tut === 0) { g.tut = 1; g.tutT = 0; }
     else if (g.tut === 2) { g.tut = 3; g.tutT = 0; }
   }
@@ -1532,6 +1551,15 @@ function criarFito() {
         }
       } else if (pl.tipo === 'vet') {
         const a = Math.min(cont[i], .06 * dt); cont[i] -= a; g.absorvido += a; g.pontos += a * 120;
+        if (g.tut < 0) {
+          let pressao = cont[i]; for (const [dc, dl] of VIZ4) { const cc = i % C + dc, ll = Math.floor(i / C) + dl; if (cc >= 0 && cc < C && ll >= 0 && ll < Lh) pressao = Math.max(pressao, cont[id(cc, ll)]); }
+          pl.vida -= dt * (.018 + pressao * .05);
+          if (pl.vida <= 0) {
+            planta[i] = null; som('erro');
+            g.parts.push({ x: OX + (i % C) * CEL + 15, y: OY + Math.floor(i / C) * CEL, t: 0, txt: 'vetiver gasto', cor: '#e8913a' });
+            if (!g.dicas.vetGasto && toastLivre()) { g.dicas.vetGasto = 1; toast('O vetiver segurou o metal até se desgastar. Plante outro pra manter o muro.', 'aviso', 3200); }
+          }
+        }
       }
     }
     for (const i of parque) if (cont[i] > .2) g.saude -= cont[i] * 9 * dt;
@@ -1603,6 +1631,12 @@ function criarFito() {
       const c = i % C, l = Math.floor(i / C), x = OX + c * CEL, y = OY + l * CEL;
       const s = SPR[pl.tipo], e = pl.tipo === 'gir' ? 1.35 : 1.6, cresce = Math.min(1, .5 + pl.t * 1.5);
       spr(ctx, pl.tipo, Math.round(x + 15 - s.width * e * cresce / 2), Math.round(y + 27 - s.height * e * cresce), e * cresce);
+      if (pl.tipo === 'vet') {
+        const v = Math.max(0, pl.vida);
+        ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + 25, 22, 3);
+        ctx.fillStyle = v > .5 ? '#86c95a' : v > .25 ? '#f0c03a' : (Math.floor(g.t * 6) % 2 ? '#e0573f' : '#8a2a20'); ctx.fillRect(x + 4, y + 25, Math.ceil(22 * v), 3);
+        if (v < .25) { ctx.fillStyle = 'rgba(120,80,30,.35)'; ctx.fillRect(x + 2, y + 2, CEL - 4, CEL - 4); }
+      }
       if (pl.tipo === 'gir') {
         const cheia = pl.carga >= CHEIA;
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 4, y + 25, 22, 3);
@@ -1689,7 +1723,7 @@ const JOGOS = {
     passos: [
       ['perigo', 'As <b>fábricas</b> soltam metal pesado no solo. Ele aparece em <b style="color:#c457d6">roxo</b> e vai escorrendo até o <b>parque</b>.'],
       ['gir', '<b>Girassol</b> aspira o metal da casa onde está. Quando enche, é <b>colhido sozinho</b>, dá +300 pontos e <b>devolve 1 semente</b>.'],
-      ['vet', '<b>Vetiver</b> é um muro de raízes: <b>segura o metal</b> e ele quase não passa pra frente.'],
+      ['vet', '<b>Vetiver</b> é um muro de raízes: <b>segura o metal</b>. Dura mais que o girassol, mas <b>vai se desgastando</b> (barrinha verde) e precisa ser trocado.'],
       ['semente', 'Cada planta gasta <b>sementes</b> (girassol 2, vetiver 1). Elas voltam sozinhas com o tempo.'],
       ['90s', 'Novas fábricas ligam no meio do jogo. Aguente <b>90 segundos</b> com o parque saudável. <b>Quanto menos plantas usar, maior o bônus</b> no final.']
     ],
