@@ -443,12 +443,12 @@ function som(tipo) {
     if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
     if (actx.state === 'suspended') actx.resume();
     const S = { ok: [[660, .06], [990, .09]], erro: [[180, .18]], pulo: [[420, .05], [640, .05]], moeda: [[880, .04], [1320, .07]],
-      dano: [[150, .22]], nav: [[520, .03]], fim: [[523, .1], [659, .1], [784, .22]], planta: [[392, .05], [523, .07]] }[tipo];
+      dano: [[150, .22]], nav: [[520, .03]], fim: [[523, .1], [659, .1], [784, .22]], vitoria: [[523, .09], [659, .09], [784, .09], [1047, .3]], derrota: [[392, .16], [330, .16], [262, .16], [196, .4]], vida: [[330, .08], [220, .2]], planta: [[392, .05], [523, .07]] }[tipo];
     if (!S) return;
     let t = actx.currentTime;
     for (const [f, d] of S) {
       const o = actx.createOscillator(), g = actx.createGain();
-      o.type = (tipo === 'erro' || tipo === 'dano') ? 'sawtooth' : 'square';
+      o.type = (tipo === 'erro' || tipo === 'dano' || tipo === 'vida') ? 'sawtooth' : tipo === 'derrota' ? 'triangle' : 'square';
       o.frequency.value = f; g.gain.setValueAtTime(.05, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
       o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d + .01); t += d;
     }
@@ -595,7 +595,7 @@ const KENNEY_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnYAAAJ2CAMAAA
 const KT = 21;
 const KMAP = { grama_t1: [2, 4], grama_t2: [3, 4], grama_t3: [4, 4], grama_f: [2, 5], roxo_t: [2, 6], roxo_f: [2, 7], cinza_t: [2, 10], cinza_f: [2, 11],
   tabua_e: [5, 12], tabua_m: [6, 12], tabua_m2: [10, 12], flag_v1: [11, 10], flag_v2: [11, 11], flag_l1: [12, 10], flag_l2: [12, 11], exit: [13, 8],
-  et: [19, 0], et_a1: [20, 0], et_a2: [21, 0], et_pulo: [22, 0], et_dano: [23, 0], et_rosa: [19, 2], et_amar: [19, 3],
+  et: [19, 0], et_a1: [20, 0], et_a2: [21, 0], et_pulo: [22, 0], et_dano: [23, 0], et_rosa: [19, 2], et_amar: [19, 3], et_rosa_x: [23, 2], et_amar_x: [23, 3],
   slime1: [20, 8], slime2: [21, 8], fant1: [25, 14], fant2: [26, 14],
   arbusto: [16, 1], cog1: [17, 3], cog2: [18, 3], cerca_p: [7, 28], cerca: [8, 28], pinho_t: [13, 21], pinho_b: [13, 22], perigo: [10, 9], caixa: [10, 6], broto_k: [17, 0] };
 const KMULTI = { arvore: [8, 21, 3, 2] };
@@ -691,7 +691,7 @@ function criarDescarte() {
       } else {
         g.combo = 0; g.erros++; som('erro');
         if (it.t === 'esp') {
-          g.manchas++; g.manchasPos.push({ x: LANES[it.lane] + (r() - .5) * 60, w: 26 + r() * 20 });
+          g.manchas++; g.manchasPos.push({ x: LANES[it.lane] + (r() - .5) * 60, w: 26 + r() * 20, t: 0 }); g.tremor = .35; g.flashTela = .5;
           g.parts.push({ x: LANES[it.lane], y: BOCA - 20, t: 0, txt: 'mancha de metal!', cor: '#c457d6' });
           toast(it.fato, 'perigo', 4200);
           if (g.manchas >= 3) { g.fim = true; return; }
@@ -718,7 +718,20 @@ function criarDescarte() {
     ctx.fillStyle = '#4e3420'; ctx.fillRect(0, 249, W, 21);
     for (let x = 0; x < W; x += KT) spr(ctx, ['grama_t1', 'grama_t2', 'grama_t3'][(x / KT) % 3 | 0], x, 249, 1);
     for (const bx of [10, 152, 300, 446]) spr(ctx, 'arbusto', bx, 228, 1);
-    for (const m of g.manchasPos) { ctx.fillStyle = 'rgba(196,87,214,.8)'; ctx.beginPath(); ctx.ellipse(m.x, 258, m.w, 7, 0, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(125,47,140,.9)'; ctx.beginPath(); ctx.ellipse(m.x + 4, 259, m.w * .45, 3.5, 0, 0, 7); ctx.fill(); }
+    for (const m of g.manchasPos) {
+      m.t = (m.t || 0) + 1 / 60; const k = Math.min(1, m.t / .5), onda = m.t < 1 ? (1 - m.t) : 0;
+      if (onda > 0) { ctx.strokeStyle = `rgba(196,87,214,${onda})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(m.x, 258, m.w * (1 + m.t * 1.4), 7 + m.t * 8, 0, 0, 7); ctx.stroke(); ctx.lineWidth = 1; }
+      ctx.fillStyle = 'rgba(196,87,214,.85)'; ctx.beginPath(); ctx.ellipse(m.x, 258, m.w * k, 7 * k, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(125,47,140,.9)'; ctx.beginPath(); ctx.ellipse(m.x + 4, 259, m.w * .45 * k, 3.5 * k, 0, 0, 7); ctx.fill();
+      if (Math.floor(g.t * 2 + m.x) % 3 === 0) { ctx.fillStyle = 'rgba(231,166,242,.8)'; ctx.fillRect(m.x - 6 + (m.x * 7 % 12), 252 - ((g.t * 20 + m.x) % 12), 2, 2); }
+    }
+    if (g.sujo > 0) {
+      const top = 270 - g.sujo * 150;
+      ctx.fillStyle = 'rgba(125,47,140,.88)'; ctx.beginPath(); ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 8) ctx.lineTo(x, top + Math.sin(x / 22 + g.t * 4) * 4);
+      ctx.lineTo(W, H); ctx.fill();
+      ctx.fillStyle = 'rgba(231,166,242,.7)'; for (let k = 0; k < 14; k++) { const bx = (k * 37) % W, by = top + 10 + ((g.t * 30 + k * 23) % (270 - top)); ctx.fillRect(bx, H - (by - top), 3, 3); }
+    }
     for (let i = 0; i < 3; i++) desenhaLixeira(ctx, LANES[i], BOCA, TIPOS[i], g.flash[i]);
     const it = g.item, s = SPR[it.id], e = 3, sw = s.width * e, sh = s.height * e;
     ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(it.x, BOCA - 2, 14, 3, 0, 0, 7); ctx.fill();
@@ -730,7 +743,9 @@ function criarDescarte() {
   g.hud = () => [['Pontos', g.pontos], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 10], ['Combo', 'x' + mult()], ['Manchas', g.manchas + '/3', g.manchas >= 2]];
   g.resumo = () => [['Itens no lugar certo', g.acertos], ['Erros', g.erros], ['Pilhas e eletrônicos salvos', g.salvos], ['Manchas no solo', g.manchas]];
   g.licao = () => 'Pilha, bateria, lâmpada e eletrônico têm metal pesado. O lugar deles é o ponto de coleta, nunca o lixo comum.';
-  g.titulo = () => g.manchas >= 3 ? 'O solo ficou contaminado' : 'Tempo esgotado';
+  g.titulo = () => g.manchas >= 3 ? 'O solo ficou contaminado' : 'Tempo esgotado!';
+  g.vitoria = () => g.manchas < 3;
+  g.anim = (dt, t) => { g.t += dt; particulas(g, dt); if (g.manchas >= 3) g.sujo = Math.min(1, t / 1.4); };
   return g;
 }
 function desenhaLixeira(ctx, cx, y, t, flash) {
@@ -761,11 +776,11 @@ function lixeiraMini(ctx, x, y, t, pisca) {
 }
 
 /* ================= JOGO 2: PATRULHA BARUERI (plataforma) ================= */
-const T = 21, ROWS = 13;
+const T = 21, ROWS = 13, TEMPO_PLAT = 200;
 const FASES = [
   { nome: 'Praça', len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
   { nome: 'Avenida', len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
-  { nome: 'Zona industrial', len: 132, seed: 37, gaps: .28, inim: .75, voa: .35, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria' }
+  { nome: 'Zona industrial', len: 156, seed: 37, gaps: .3, inim: .85, voa: .4, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria', desafios: [[.2, 'h'], [.36, 'v'], [.6, 'hh'], [.75, 'v'], [.84, 'h']] }
 ];
 const TEMAS = {
   praca: { ceu: ['#8fd0ee', '#dff3fb'], longe: '#b4dcc6', perto: '#93c9a6', topo: ['grama_t1', 'grama_t2', 'grama_t3'], fill: 'grama_f', base: '#c99869', decor: ['arbusto', 'arbusto', 'cog1', 'cog2', 'arvore', 'pinho', 'cerca'] },
@@ -786,6 +801,30 @@ function gerarFase(f) {
     if (x >= L - 24) continue;
     if (r() < f.gaps) { const gw = 2 + Math.floor(r() * 2); for (let i = 0; i < gw && x < L - 24; i++) { alt[x] = -1; x++; } }
     else if (r() < .55) h = clamp(h + (r() < .5 ? -1 : 1) * (1 + Math.floor(r() * 2)), 8, 11);
+  }
+  const moveis = [], extras = [], subida = new Set();
+  if (f.desafios) {
+    for (const [pos, tipo] of f.desafios) {
+      const x0 = Math.floor(L * pos); let h0 = 11; for (let k = x0; k >= 0; k--) if (alt[k] >= 0) { h0 = alt[k]; break; }
+      for (let k = x0 - 3; k < x0; k++) alt[k] = h0;
+      if (tipo === 'h') {
+        for (let k = x0; k < x0 + 6; k++) alt[k] = -1; for (let k = x0 + 6; k < x0 + 10; k++) alt[k] = h0;
+        moveis.push({ tipo: 'h', x: x0 * T, y: h0 * T, w: 2 * T, x0: x0 * T, x1: (x0 + 4) * T, v: 52, dir: 1 });
+        extras.push({ x: (x0 + 3) * T - 5, y: (h0 - 3) * T + 5 });
+      } else if (tipo === 'hh') {
+        for (let k = x0; k < x0 + 10; k++) alt[k] = -1; for (let k = x0 + 10; k < x0 + 14; k++) alt[k] = h0;
+        moveis.push({ tipo: 'h', x: x0 * T, y: h0 * T, w: 2 * T, x0: x0 * T, x1: (x0 + 3) * T, v: 48, dir: 1 });
+        moveis.push({ tipo: 'h', x: (x0 + 8) * T, y: (h0 - 1) * T, w: 2 * T, x0: (x0 + 5) * T, x1: (x0 + 8) * T, v: 48, dir: -1 });
+        extras.push({ x: (x0 + 5) * T, y: (h0 - 3) * T + 5 });
+      } else {
+        const h1 = Math.max(5, h0 - 3);
+        for (let k = x0; k < x0 + 4; k++) alt[k] = -1; for (let k = x0 + 4; k < x0 + 9; k++) alt[k] = h1; subida.add(x0 + 4);
+        moveis.push({ tipo: 'v', x: (x0 + 1) * T, y: (h0 + 1) * T, w: 2 * T, y0: h1 * T, y1: (h0 + 1) * T, v: 40, dir: -1 });
+        extras.push({ x: (x0 + 1.5) * T, y: (h1 - 2) * T + 5 });
+      }
+    }
+    let prev = alt[0];
+    for (let k = 1; k < L; k++) { if (alt[k] < 0) continue; if (alt[k] < prev - 2 && !subida.has(k)) alt[k] = prev - 2; prev = alt[k]; }
   }
   for (let xx = 0; xx < L; xx++) if (alt[xx] >= 0) for (let y = alt[xx]; y < ROWS; y++) sol[y][xx] = 1;
   const itens = [], inim = [], plats = [];
@@ -814,6 +853,7 @@ function gerarFase(f) {
       inim.push({ tipo: 'anda', x: xx * T, y: alt[xx] * T - 13, w: 18, h: 13, vx: -34, metal, vivo: true, t: 0 });
     }
   }
+  for (const e of extras) itens.push({ x: Math.round(e.x), y: Math.round(e.y), id: LIXO_PLAT[Math.floor(r() * LIXO_PLAT.length)], ok: false });
   const chao = alt[L - 1] * T;
   const lixeiras = [['esp', L - 17], ['rec', L - 13], ['org', L - 9]].map(([t, tx]) => ({ t, x: tx * T, y: chao - 32, w: 26, h: 32, pisca: 0 }));
   const meio = Math.floor(L / 2); let cpx = meio; while (cpx < L - 25 && alt[cpx] < 0) cpx++;
@@ -826,11 +866,11 @@ function gerarFase(f) {
     if (k === 'arvore' && (alt[xx + 2] !== alt[xx] || alt[xx - 1] !== alt[xx])) continue;
     decor.push({ x: xx * T, y: alt[xx] * T, k });
   }
-  return { L, sol, alt, itens, inim, lixeiras, plats, decor, bandeira: { x: (L - 4) * T, y: chao - 42 }, cp: { x: cpx * T, y: alt[cpx] * T, ok: false }, fundo, chao };
+  return { L, sol, alt, itens, inim, lixeiras, plats, decor, moveis, toxico: !!f.desafios, bandeira: { x: (L - 4) * T, y: chao - 42 }, cp: { x: cpx * T, y: alt[cpx] * T, ok: false }, fundo, chao };
 }
 
 function criarPlataforma() {
-  const g = { pontos: 0, tempo: 160, vidas: 3, fase: 0, fim: false, venceu: false, derrotados: 0, entregues: 0, largados: 0,
+  const g = { pontos: 0, tempo: TEMPO_PLAT, vidas: 3, fase: 0, fim: false, venceu: false, derrotados: 0, entregues: 0, largados: 0,
     carrega: { esp: 0, rec: 0, org: 0 }, parts: [], vistos: {}, sementes: [], brotos: [], t: 0, cam: 0, lv: null, p: null, aviso: 0 };
   const TIPO_DE = id => ITENS.find(i => i.id === id).t;
   function carregar(i) {
@@ -859,19 +899,25 @@ function criarPlataforma() {
   const bate = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   function fato(metal) { if (!g.vistos[metal] && toastLivre()) { g.vistos[metal] = 1; toast(METAIS[metal].fato, 'perigo', 4200); } }
   function matar(e, pts) { e.vivo = false; g.derrotados++; g.pontos += pts; const ta = lv().alt[Math.floor((e.x + 9) / T)]; g.brotos.push({ x: e.x, y: e.y, ya: ta >= 0 ? ta * T - KT : 999, t: 0 }); g.parts.push({ x: e.x + 10, y: e.y - 6, t: 0, txt: '+' + pts, cor: '#86c95a' }); som('ok'); fato(e.metal); }
-  function dano() {
-    const p = g.p; if (p.inv > 0) return;
-    g.vidas--; som('dano'); p.inv = 1.6; p.vy = -290; p.vx = -p.dir * 184;
-    if (g.vidas <= 0) g.fim = true;
+  function morrer(buraco) {
+    const p = g.p; g.vidas--; som('vida'); g.tremor = .3; g.flashTela = .6;
+    g.morte = { t: 0, x: p.x, y: buraco ? H + 10 : p.y, vy: buraco ? 0 : -420, buraco };
+    g.parts.push({ x: p.x + 6, y: Math.min(p.y, H - 30), t: 0, txt: '-1 vida', cor: '#e0573f' });
+    if (buraco && g.vidas > 0) toast(f3() ? 'Caiu na vala tóxica! Perdeu uma vida.' : 'Caiu no buraco! Perdeu uma vida.', 'aviso', 2000);
   }
-  function cair() {
-    g.vidas--; som('dano');
-    if (g.vidas <= 0) { g.fim = true; return; }
+  const f3 = () => !!FASES[g.fase] && !!FASES[g.fase].desafios;
+  function renascer() {
     const p = g.p, c = lv().cp;
     if (c.ok) { p.x = c.x; p.y = c.y - p.h - 2; } else { p.x = g.spawn.x; p.y = g.spawn.y; }
-    p.vx = 0; p.vy = 0; p.inv = 1.6;
-    toast('Caiu no buraco! Perdeu uma vida.', 'aviso', 2000);
+    p.vx = 0; p.vy = 0; p.inv = 1.6; p.sobre = null; g.morte = null;
   }
+  function dano() {
+    const p = g.p; if (p.inv > 0) return;
+    if (g.vidas <= 1) { morrer(false); return; }
+    g.vidas--; som('vida'); g.tremor = .25; g.flashTela = .45; p.inv = 1.6; p.vy = -290; p.vx = -p.dir * 184;
+    g.parts.push({ x: p.x + 6, y: p.y - 6, t: 0, txt: '-1 vida', cor: '#e0573f' });
+  }
+  function cair() { morrer(true); }
   function concluirFase() {
     const c = g.carrega;
     if (c.esp > 0) { g.largados += c.esp; g.pontos = Math.max(0, g.pontos - 100 * c.esp); toast(`Você deixou ${c.esp} ${c.esp > 1 ? 'itens perigosos' : 'item perigoso'} na rua. -${100 * c.esp}`, 'perigo', 3000); }
@@ -879,13 +925,28 @@ function criarPlataforma() {
     g.carrega = { esp: 0, rec: 0, org: 0 };
     g.pontos += 500; som('fim');
     g.fase++;
-    if (g.fase >= FASES.length) { g.venceu = true; g.pontos += Math.ceil(g.tempo) * 10 + g.vidas * 300; g.fim = true; return; }
+    if (g.fase >= FASES.length) { g.venceu = true; g.gasto = TEMPO_PLAT - g.tempo; g.bonus = Math.round(g.tempo * 60) + g.vidas * 300; g.pontos += g.bonus; g.fim = true; return; }
     carregar(g.fase);
   }
   g.update = dt => {
-    g.t += dt; g.tempo -= dt;
+    g.t += dt;
+    if (g.morte) {
+      const m = g.morte; m.t += dt;
+      if (!m.buraco) { m.vy += 1181 * dt; m.y += m.vy * dt; }
+      particulas(g, dt);
+      if (m.t > (m.buraco ? .9 : 1.5)) { if (g.vidas <= 0) { g.fim = true; return; } renascer(); }
+      return;
+    }
+    g.tempo -= dt;
     if (g.tempo <= 0) { g.tempo = 0; g.fim = true; return; }
     const p = g.p, I = Input, l = lv();
+    for (const m of l.moveis) {
+      const ax0 = m.x, ay0 = m.y;
+      if (m.tipo === 'h') { m.x += m.v * m.dir * dt; if (m.x > m.x1) { m.x = m.x1; m.dir = -1; } if (m.x < m.x0) { m.x = m.x0; m.dir = 1; } }
+      else { m.y += m.v * m.dir * dt; if (m.y > m.y1) { m.y = m.y1; m.dir = -1; } if (m.y < m.y0) { m.y = m.y0; m.dir = 1; } }
+      m.dx = m.x - ax0; m.dy = m.y - ay0;
+    }
+    if (p.sobre) { moverX(p, p.sobre.dx); p.y += p.sobre.dy; }
     const ax = (I.held.right ? 1 : 0) - (I.held.left ? 1 : 0);
     p.vx += (ax * 147 - p.vx) * Math.min(1, dt * (p.chao ? 14 : 7));
     if (ax) p.dir = ax;
@@ -895,7 +956,12 @@ function criarPlataforma() {
     if (!I.held.a && p.vy < -170) p.vy = -170;
     p.vy = Math.min(565, p.vy + 1181 * dt);
     if (moverX(p, p.vx * dt)) p.vx = 0;
+    const pe0 = p.y + p.h;
     const hit = moverY(p, p.vy * dt); p.chao = hit === 1; if (hit) p.vy = 0;
+    p.sobre = null;
+    if (hit !== 1 && p.vy >= 0) for (const m of l.moveis) {
+      if (p.x + p.w > m.x + 2 && p.x < m.x + m.w - 2 && pe0 <= m.y + 3 && p.y + p.h >= m.y) { p.y = m.y - p.h; p.vy = 0; p.chao = true; p.sobre = m; break; }
+    }
     if (p.x < 0) p.x = 0;
     p.inv = Math.max(0, p.inv - dt); p.cd -= dt; p.anim += Math.abs(p.vx) * dt;
     if (p.y > ROWS * T + 20) { cair(); if (g.fim) return; }
@@ -981,6 +1047,21 @@ function criarPlataforma() {
       else spr(ctx, d.k, x, d.y - KT, 1);
     }
     const tx0 = Math.max(0, Math.floor(cam / T)), tx1 = Math.min(l.L - 1, tx0 + Math.ceil(W / T) + 1);
+    if (l.toxico) for (let tx = tx0; tx <= tx1; tx++) {
+      if (l.alt[tx] >= 0) continue; const x = tx * T - cam;
+      ctx.fillStyle = '#3a2340'; ctx.fillRect(x, H - 34, T, 34);
+      ctx.fillStyle = '#9b3fb0'; for (let k = 0; k < T; k += 3) ctx.fillRect(x + k, H - 22 + Math.round(Math.sin((tx * T + k) / 9 + g.t * 3) * 2), 3, 22);
+      ctx.fillStyle = '#c86fdc'; for (let k = 0; k < T; k += 3) ctx.fillRect(x + k, H - 22 + Math.round(Math.sin((tx * T + k) / 9 + g.t * 3) * 2), 3, 2);
+      const bb = (g.t * 1.3 + tx * .37) % 1; ctx.fillStyle = `rgba(231,166,242,${1 - bb})`; ctx.fillRect(x + (tx * 7) % 15, H - 20 - bb * 18, 3, 3);
+    }
+    for (const m of l.moveis) {
+      const x = Math.round(m.x - cam), y = Math.round(m.y); if (x < -60 || x > W + 20) continue;
+      ctx.fillStyle = 'rgba(27,23,18,.25)';
+      if (m.tipo === 'h') for (let k = m.x0; k < m.x1 + m.w; k += 8) ctx.fillRect(Math.round(k - cam), y + 10, 4, 1);
+      else for (let k = m.y0; k < m.y1 + 10; k += 8) ctx.fillRect(x + m.w / 2 - 1, k, 2, 4);
+      spr(ctx, 'tabua_e', x, y, 1); spr(ctx, 'tabua_e', x + T, y, 1, true);
+      ctx.fillStyle = '#f0c03a'; ctx.fillRect(x + m.w / 2 - 3, y + 2, 6, 2);
+    }
     for (let tx = tx0; tx <= tx1; tx++) {
       for (let ty = 0; ty < ROWS; ty++) {
         const v = l.sol[ty][tx]; if (!v) continue;
@@ -1022,7 +1103,10 @@ function criarPlataforma() {
     }
     for (const sd of g.sementes) spr(ctx, 'semente', Math.round(sd.x - cam), Math.round(sd.y), 2);
     const p = g.p;
-    if (!(p.inv > 0 && Math.floor(g.t * 14) % 2)) {
+    if (g.morte) {
+      const m = g.morte;
+      if (!m.buraco && SPR.et_dano) { ctx.save(); ctx.translate(Math.round(m.x - cam + 6), Math.round(m.y + 8)); ctx.rotate(Math.min(m.t, .5) * Math.PI * 2); ctx.drawImage(SPR.et_dano, -10, -10); ctx.restore(); }
+    } else if (!(p.inv > 0 && Math.floor(g.t * 14) % 2)) {
       const q = p.inv > 1.2 ? 'et_dano' : !p.chao ? 'et_pulo' : Math.abs(p.vx) > 10 ? (Math.floor(p.anim / 12) % 2 ? 'et_a1' : 'et_a2') : 'et';
       if (SPR[q]) spr(ctx, q, Math.round(p.x - cam - 4), Math.round(p.y - 2), 1, p.dir < 0);
       else spr(ctx, 'jog', Math.round(p.x - cam - 1), Math.round(p.y), 1.4, p.dir < 0);
@@ -1034,7 +1118,10 @@ function criarPlataforma() {
     return [['Pontos', g.pontos], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 20], ['Vidas', g.vidas, g.vidas === 1],
       ['Fase', `${Math.min(g.fase + 1, 3)}/3`], ['Mochila', `${c.esp} perigoso · ${c.rec} recicl. · ${c.org} orgân.`]];
   };
-  g.resumo = () => [['Fases completas', g.fase], ['Nuvens de metal vencidas', g.derrotados], ['Lixo entregue certo', g.entregues], ['Itens perigosos largados', g.largados]];
+  const fmt = s2 => `${Math.floor(s2 / 60)}:${(s2 % 60).toFixed(1).padStart(4, '0')}`;
+  g.resumo = () => [['Fases completas', g.fase], ...(g.venceu ? [['Tempo total', fmt(g.gasto)], ['Bônus de tempo e vidas', '+' + g.bonus.toLocaleString('pt-BR')]] : []), ['Inimigos vencidos', g.derrotados], ['Lixo entregue certo', g.entregues], ['Itens perigosos largados', g.largados]];
+  g.vitoria = () => g.venceu;
+  g.anim = (dt) => { g.t += dt; particulas(g, dt); if (g.morte && !g.morte.buraco) { g.morte.vy += 1181 * dt; g.morte.y += g.morte.vy * dt; } };
   g.licao = () => 'Indústria, trânsito e lixo jogado no lugar errado são as maiores fontes de metal no solo das cidades.';
   g.titulo = () => g.venceu ? 'Barueri mais limpa!' : (g.tempo <= 0 ? 'Tempo esgotado' : 'Fim de jogo');
   return g;
@@ -1149,8 +1236,9 @@ function criarFito() {
         ctx.fillStyle = 'rgba(242,234,215,.55)';
         if (c === 7 && l === 4) { ctx.fillRect(x + 6, y + 6, 2, 18); ctx.fillRect(x + 22, y + 6, 2, 18); ctx.fillRect(x + 6, y + 6, 18, 2); ctx.fillRect(x + 12, y + 8, 1, 10); ctx.fillRect(x + 10, y + 18, 5, 2); }
         if (c === 9 && l === 5) { ctx.beginPath(); ctx.moveTo(x + 4, y + 24); ctx.lineTo(x + 24, y + 8); ctx.lineTo(x + 26, y + 10); ctx.lineTo(x + 7, y + 25); ctx.fill(); }
-        if (c === 8 && l === 4) spr(ctx, 'et_rosa', x + 4, y + 6, 1);
-        if (c === 7 && l === 5) spr(ctx, 'et_amar', x + 4, y + 6, 1);
+        const pulo = g.festa ? Math.abs(Math.sin(g.t * 9 + c)) * -6 : 0, triste = g.saude < 35;
+        if (c === 8 && l === 4) spr(ctx, triste ? 'et_rosa_x' : 'et_rosa', x + 4, y + 6 + pulo, 1);
+        if (c === 7 && l === 5) spr(ctx, triste ? 'et_amar_x' : 'et_amar', x + 4, y + 6 + pulo, 1);
         if (c === 8 && l === 5) spr(ctx, 'arbusto', x + 4, y + 6, 1);
         if (c === 9 && l === 4) { spr(ctx, 'pinho_t', x + 4, y - 15, 1); spr(ctx, 'pinho_b', x + 4, y + 6, 1); }
       }
@@ -1203,6 +1291,9 @@ function criarFito() {
   g.resumo = () => [['Plantas colocadas', g.plantadas], ['Girassóis colhidos', g.colhidas], ['Metal retirado do solo', Math.round(g.absorvido * 10) + ' kg*'], ['Saúde do parque', Math.ceil(g.saude) + '%']];
   g.licao = () => 'Fitorremediação usa plantas pra limpar o solo. É barata e funciona bem em praças e parques, mas é lenta. *Unidade de jogo, não é medida real.';
   g.titulo = () => g.saude <= 0 ? 'O metal chegou no parque' : 'Parque protegido!';
+  g.vitoria = () => g.saude > 0;
+  g.aoFim = () => { if (g.saude > 0) g.festa = true; else { g.tremor = .5; for (const i of parque) cont[i] = 1; } };
+  g.anim = (dt) => { g.t += dt; particulas(g, dt); };
   return g;
 }
 
@@ -1241,7 +1332,7 @@ const Jogo = {
     const d = JOGOS[this.id];
     Input.limpar(); this.pausado = false; $('#pausa').hidden = true; $('#toast').hidden = true;
     this.toastTopo = !!d.toastTopo;
-    this.g = d.criar(); this.hudAntes = '';
+    this.g = d.criar(); this.hudAntes = ''; this.fimT = -1;
     const cruz = $('#cruz'); cruz.querySelectorAll('button').forEach(b => { b.hidden = !d.toque.dir.includes(b.dataset.k); });
     cruz.classList.toggle('so-lados', !d.toque.dir.includes('up'));
     cruz.classList.toggle('tres', d.toque.dir.length === 3);
@@ -1254,10 +1345,19 @@ const Jogo = {
   pausar(v) { this.pausado = v; $('#pausa').hidden = !v; Input.limpar(); if (v) requestAnimationFrame(() => Nav.reset()); },
   frame(dt) {
     const g = this.g; if (!g) return;
+    if (this.fimT >= 0) {
+      this.fimT += dt; if (g.anim) g.anim(dt, this.fimT);
+      desenhar(g); desenhaFim(ctx, g, this.fimT);
+      if (this.fimT > 3 || (this.fimT > 1 && (Input.pressed.a || Input.pressed.start))) { this.fimT = -1; terminar(); }
+      return;
+    }
     if (Input.pressed.start) this.pausar(!this.pausado);
     if (this.pausado) Nav.handle();
-    else { g.update(dt); if (g.fim) { g.draw(ctx); return terminar(); } }
-    g.draw(ctx);
+    else {
+      g.update(dt);
+      if (g.fim) { this.fimT = 0; this.venceu = !!(g.vitoria && g.vitoria()); if (g.aoFim) g.aoFim(); som(this.venceu ? 'vitoria' : 'derrota'); Jogo.confete = this.venceu ? Array.from({ length: 70 }, () => ({ x: Math.random() * W, y: -Math.random() * H * .6, vy: 60 + Math.random() * 90, vx: (Math.random() - .5) * 40, c: ['#f0c03a', '#86c95a', '#4a90d9', '#e8913a', '#c457d6', '#f2ead7'][Math.random() * 6 | 0], r: Math.random() * 6 })) : []; $('#toast').hidden = true; }
+    }
+    desenhar(g);
     const itens = g.hud(), chave = JSON.stringify(itens);
     if (chave !== this.hudAntes) {
       this.hudAntes = chave;
@@ -1265,6 +1365,27 @@ const Jogo = {
     }
   }
 };
+function desenhar(g) {
+  if (g.tremor > 0) { g.tremor -= 1 / 60; ctx.save(); ctx.translate((Math.random() - .5) * 6, (Math.random() - .5) * 6); g.draw(ctx); ctx.restore(); }
+  else g.draw(ctx);
+  if (g.flashTela > 0) { ctx.fillStyle = `rgba(224,87,63,${g.flashTela * .5})`; ctx.fillRect(0, 0, W, H); g.flashTela -= 1 / 60; }
+}
+function desenhaFim(ctx, g, t) {
+  const ok = Jogo.venceu, a = Math.min(1, t / .6);
+  if (ok) {
+    for (const c of Jogo.confete) { c.y += c.vy / 60; c.x += c.vx / 60; c.r += .15; ctx.fillStyle = c.c; ctx.fillRect(c.x, c.y, 4, 2 + Math.abs(Math.sin(c.r)) * 4); }
+    ctx.fillStyle = `rgba(23,19,14,${.35 * a})`;
+  } else ctx.fillStyle = `rgba(40,10,48,${.55 * a})`;
+  ctx.fillRect(0, 0, W, H);
+  const esc = t < .5 ? .4 + t * 1.6 + Math.sin(t * 12) * .08 : 1.2 - Math.min(.2, (t - .5));
+  ctx.save(); ctx.translate(W / 2, H / 2 - 18); ctx.scale(esc, esc);
+  ctx.fillStyle = ok ? '#f0c03a' : '#c457d6'; ctx.fillRect(-170, -26, 340, 52);
+  ctx.fillStyle = '#17130e'; ctx.fillRect(-166, -22, 332, 44);
+  txt(ctx, g.titulo(), 0, -12, { tam: 18, al: 'center', cor: ok ? '#f0c03a' : '#e7a6f2' });
+  ctx.restore();
+  if (t > .7) txt(ctx, Math.max(0, Math.round(g.pontos)).toLocaleString('pt-BR') + ' pontos', W / 2, H / 2 + 22, { tam: 14, al: 'center', cor: '#f2ead7' });
+  if (t > 1.2 && Math.floor(t * 3) % 2) txt(ctx, TOQUE ? 'toque pra continuar' : 'aperte A pra continuar', W / 2, H / 2 + 44, { tam: 9, al: 'center', cor: '#ab9f88' });
+}
 function redimensionar() {
   const r = $('#palco').getBoundingClientRect();
   if (!r.width || !r.height) return;
@@ -1281,7 +1402,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && Tel
 const Ultimo = { jogo: null, pontos: 0, salvo: false, nome: null };
 const AUTO_SALVA = 30;
 function terminar() {
-  const g = Jogo.g; som('fim');
+  const g = Jogo.g;
   Object.assign(Ultimo, { jogo: Jogo.id, pontos: Math.max(0, Math.round(g.pontos)), salvo: false, nome: null });
   $('#fim-jogo').textContent = JOGOS[Jogo.id].nome;
   $('#fim-titulo').textContent = g.titulo();
@@ -1401,18 +1522,33 @@ const PERGUNTAS = [
   { k: 'descarte', q: 'Como você costuma descartar pilhas, baterias e eletrônicos velhos?', op: ['Entrego em pontos de coleta seletiva específicos', 'Descarto no lixo comum (orgânico/rejeito)', 'Descarto no lixo reciclável comum', 'Guardo em casa porque não sei onde descartar'] },
   { k: 'preocupacao', q: 'De 1 a 5, o quanto você se preocupa com os impactos dos metais pesados na saúde?', op: ['1', '2', '3', '4', '5'], num: true }
 ];
+async function posicao() {
+  try {
+    const top = await Ranking.top(Ultimo.jogo, 100);
+    const i = top.findIndex(s2 => s2.nome === Ultimo.nome && Number(s2.pontos) === Ultimo.pontos);
+    return i >= 0 ? `Você ficou em ${i + 1}º lugar no ${JOGOS[Ultimo.jogo].nome}!` : '';
+  } catch (e) { return ''; }
+}
 const Pesquisa = {
   i: 0, resp: {},
   oferecer() {
     const ult = ls.get('solo_pesq', null);
     const jaRespondeu = ult && ((TOQUE) || (ult.nome === Ultimo.nome && Date.now() - ult.em < 20 * 60000));
-    if (jaRespondeu) return abrirRanking(Ultimo.jogo, true);
-    $('#pesq-painel').innerHTML = `<p class="eyebrow">Pesquisa da Mostra</p><h2>Ajuda a nossa pesquisa?</h2>
+    if (jaRespondeu) return this.encerrar(true);
+    $('#pesq-painel').innerHTML = `<p class="eyebrow" id="pesq-pos">Pontuação salva</p><h2>Ajuda a nossa pesquisa?</h2>
       <p class="desc">São 5 perguntas rápidas, umas 30 segundos. Não pedimos nome: só as iniciais do ranking ficam no jogo, a resposta é anônima e entra no nosso artigo científico.</p>
       <div class="linha-botoes"><button class="btn primario" data-nav id="bt-pesq-sim">Responder</button><button class="btn" data-nav data-back id="bt-pesq-nao">Pular</button></div>`;
     $('#bt-pesq-sim').onclick = () => { this.i = 0; this.resp = {}; this.pergunta(); };
-    $('#bt-pesq-nao').onclick = () => abrirRanking(Ultimo.jogo, true);
+    $('#bt-pesq-nao').onclick = () => this.encerrar(false);
     Telas.show('pesq');
+    posicao().then(t => { const el = $('#pesq-pos'); if (el && t) el.textContent = t; });
+  },
+  encerrar(rapido) {
+    if (!rapido) return irJogos();
+    $('#pesq-painel').innerHTML = `<p class="eyebrow">Pontuação salva</p><h2 id="pesq-pos2">Boa, ${esc(Ultimo.nome)}!</h2><p class="desc">Próximo jogador, é a sua vez.</p>`;
+    Telas.show('pesq');
+    posicao().then(t => { const el = $('#pesq-pos2'); if (el && t) el.textContent = t; });
+    clearTimeout(this.tm); this.tm = setTimeout(() => { if (Telas.atual === 'pesq') irJogos(); }, 2500);
   },
   pergunta() {
     const P = PERGUNTAS[this.i];
@@ -1422,7 +1558,7 @@ const Pesquisa = {
       ${P.num ? '<p class="teclado">1 = nada preocupado · 5 = muito preocupado</p>' : ''}
       <div class="linha-botoes"><button class="btn" data-nav data-back id="bt-pesq-pular">Pular pesquisa</button></div>`;
     $('#pesq-painel').querySelectorAll('.op').forEach(b => b.onclick = () => this.escolher(P.op[+b.dataset.k]));
-    $('#bt-pesq-pular').onclick = () => abrirRanking(Ultimo.jogo, true);
+    $('#bt-pesq-pular').onclick = () => irJogos();
     Telas.show('pesq');
   },
   escolher(v) {
@@ -1433,10 +1569,9 @@ const Pesquisa = {
     ls.set('solo_pesq', { nome: Ultimo.nome, em: Date.now() });
     if (Rede.ok) Rede.postar('respostas', corpo).catch(() => Fila.add('respostas', corpo));
     else { const r = ls.get('solo_respostas_local', []); r.push(corpo); ls.set('solo_respostas_local', r); }
-    $('#pesq-painel').innerHTML = `<p class="eyebrow">Pesquisa da Mostra</p><h2>Valeu!</h2><p class="desc">Sua resposta entrou na pesquisa. Agora veja onde você ficou no ranking.</p>
-      <div class="linha-botoes"><button class="btn primario" data-nav data-back id="bt-pesq-rank">Ver ranking</button></div>`;
-    $('#bt-pesq-rank').onclick = () => abrirRanking(Ultimo.jogo, true);
+    $('#pesq-painel').innerHTML = `<p class="eyebrow">Pesquisa da Mostra</p><h2>Valeu!</h2><p class="desc">Sua resposta entrou na nossa pesquisa. Próximo jogador, é a sua vez.</p>`;
     Telas.show('pesq');
+    clearTimeout(this.tm); this.tm = setTimeout(() => { if (Telas.atual === 'pesq') irJogos(); }, 2200);
   }
 };
 
@@ -1517,7 +1652,8 @@ document.querySelectorAll('#toque button').forEach(b => {
 });
 /* toque direto no canvas (Jardim Limpador) */
 cv.addEventListener('pointerdown', e => {
-  const g = Jogo.g; if (!g || !g.toque || Jogo.pausado) return;
+  if (Jogo.g && Jogo.fimT > 1) { Jogo.fimT = -1; terminar(); return; }
+  const g = Jogo.g; if (!g || !g.toque || Jogo.pausado || Jogo.fimT >= 0) return;
   const r = cv.getBoundingClientRect();
   g.toque((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H);
 });
