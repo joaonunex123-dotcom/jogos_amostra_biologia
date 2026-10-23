@@ -898,7 +898,32 @@ function desenhaArvores() {
   for (let k = 0; k < 4; k++) { const w = 3 + k * 2, y0 = 4 + k * 7; x.fillStyle = '#6f9f72'; for (let q = 0; q < 9; q++) x.fillRect(9 - Math.round(w * q / 8), y0 + q, Math.round(w * q / 8) * 2 + 1, 1); }
   SPR.d_pinheiro = c;
 }
-function criarMarcos() { desenhaParque(); desenhaArvores(); SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#fde3cb', .06); SPR.m_artes_n = nevoa(SPR.m_artes, '#fde3cb', .05); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .06); }
+function desenhaSiol() {
+  const [c, x] = novaTela(186, 90); const B = 90;
+  const letraG = (str, px, py, cor, e) => { x.fillStyle = cor; [...str].forEach((ch, k) => { const g = FONTE3[ch] || FONTE3[' ']; for (let i = 0; i < 15; i++) if (g[i] === '1') x.fillRect(px + k * 4 * e + (i % 3) * e, py + Math.floor(i / 3) * e, e, e); }); };
+  // silo
+  x.fillStyle = '#b9c2cc'; x.fillRect(166, 6, 14, B - 6); x.fillStyle = '#dfe5ea'; x.fillRect(168, 6, 4, B - 6); x.fillStyle = '#8a939b'; x.fillRect(177, 6, 3, B - 6);
+  x.fillStyle = '#8a939b'; for (let yy = 14; yy < B; yy += 10) x.fillRect(166, yy, 14, 1); x.fillStyle = '#6b737a'; x.fillRect(165, 4, 16, 3);
+  // galpão
+  x.fillStyle = '#eef1f3'; x.fillRect(30, 28, 140, B - 28); x.fillStyle = '#c9d0d6'; x.fillRect(30, 28, 140, 2);
+  x.fillStyle = '#dde2e6'; for (let xx = 34; xx < 170; xx += 8) x.fillRect(xx, 30, 1, B - 30);
+  x.fillStyle = '#3f9a3a'; x.fillRect(30, 40, 140, 7); x.fillStyle = '#6cc35a'; x.fillRect(30, 40, 140, 1); x.fillStyle = '#2f7a2c'; x.fillRect(30, 46, 140, 1);
+  // logo
+  x.fillStyle = '#ffffff'; x.fillRect(56, 52, 60, 30); x.fillStyle = '#e3e7ea'; x.fillRect(56, 81, 60, 1);
+  letraG('SIOL', 62, 56, '#d9262e', 3); elipse(x, 75, 54, 3, 2, '#4fae3a'); x.fillStyle = '#2f7a2c'; x.fillRect(74, 55, 2, 1);
+  letreiro(x, 'ALIMENTOS', 68, 74, '#3f9a3a');
+  // docas
+  for (const dx of [126, 140, 154]) { x.fillStyle = '#9aa3ab'; x.fillRect(dx, 66, 11, B - 69); x.fillStyle = '#7a838b'; for (let yy = 68; yy < B - 3; yy += 3) x.fillRect(dx, yy, 11, 1); }
+  // entrada de vidro curva
+  x.fillStyle = '#ffffff'; x.fillRect(4, 44, 34, B - 44); elipse(x, 21, 46, 17, 6, '#ffffff');
+  x.fillStyle = '#2f5a76'; x.fillRect(7, 50, 28, B - 54); elipse(x, 21, 50, 14, 4, '#2f5a76');
+  x.fillStyle = '#5f8fb0'; for (let xx = 10; xx < 34; xx += 6) x.fillRect(xx, 48, 1, B - 52); x.fillStyle = '#9cc4dc'; x.fillRect(9, 52, 3, 10);
+  // calçada, gramado e árvores
+  x.fillStyle = '#7fbf5f'; x.fillRect(0, B - 5, 186, 2); x.fillStyle = '#c4beb0'; x.fillRect(0, B - 3, 186, 3);
+  arvoreRedonda(x, 46, B - 3); arvoreRedonda(x, 118, B - 3); palmeira(x, 2, B - 3, 30);
+  return c;
+}
+function criarMarcos() { desenhaParque(); desenhaArvores(); SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#fde3cb', .06); SPR.m_artes_n = nevoa(SPR.m_artes, '#fde3cb', .05); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .06); SPR.m_siol = desenhaSiol(); SPR.m_siol_n = nevoa(SPR.m_siol, '#fde3cb', .05); }
 
 /* ================= JOGO 1: DESCARTE CERTO ================= */
 const LIX = {
@@ -1047,11 +1072,31 @@ function lixeiraMini(ctx, x, y, t, pisca) {
 
 /* ================= JOGO 2: PATRULHA BARUERI (plataforma) ================= */
 const T = 21, ROWS = 13, TEMPO_PLAT = 200;
-const FASES = [
-  { nome: 'Praça', parque: true, len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
-  { nome: 'Avenida', marcos: [['m_etec_n', .1], ['m_prefeitura_n', .45], ['m_artes_n', .76]], len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
-  { nome: 'Zona industrial', len: 156, seed: 37, gaps: .3, inim: .85, voa: .4, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria', desafios: [[.2, 'h'], [.36, 'v'], [.6, 'hh'], [.75, 'v'], [.84, 'h']] }
+const MUNDOS = [
+  [
+    { nome: 'Parque da Cidade', parque: true, len: 92, seed: 11, gaps: .14, plat: .09, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
+    { nome: 'Parque Ecológico', parque: true, len: 92, seed: 41, gaps: .12, plat: .15, inim: .55, voa: .2, metais: ['Pb', 'Cd'], tema: 'praca' },
+    { nome: 'Bosque do Parque', parque: true, len: 92, seed: 73, gaps: .17, plat: .06, inim: .6, voa: .1, metais: ['Cd', 'Pb'], tema: 'praca' }
+  ],
+  [
+    { nome: 'Avenida', marcos: [['m_etec_n', .1], ['m_prefeitura_n', .45], ['m_artes_n', .76]], len: 112, seed: 23, gaps: .22, plat: .09, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
+    { nome: 'Centro', marcos: [['m_artes_n', .18], ['m_siol_n', .58]], siol: true, len: 112, seed: 57, gaps: .25, plat: .12, inim: .65, voa: .3, metais: ['Pb', 'Hg', 'Cd'], tema: 'avenida' },
+    { nome: 'Rodoanel', marcos: [['m_prefeitura_n', .22], ['m_etec_n', .62]], len: 112, seed: 89, gaps: .2, plat: .08, inim: .7, voa: .25, metais: ['Cd', 'Pb', 'Hg'], tema: 'avenida' }
+  ],
+  [
+    { nome: 'Zona Industrial', len: 156, seed: 37, gaps: .3, plat: .09, inim: .85, voa: .4, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria', desafios: [[.2, 'h'], [.36, 'v'], [.6, 'hh'], [.75, 'v'], [.84, 'h']] },
+    { nome: 'Polo Químico', len: 156, seed: 61, gaps: .3, plat: .1, inim: .85, voa: .45, metais: ['Cr', 'As', 'Hg', 'Pb'], tema: 'industria', desafios: [[.18, 'v'], [.34, 'hh'], [.52, 'h'], [.64, 'v'], [.72, 'hh']] },
+    { nome: 'Galpões Abandonados', len: 156, seed: 97, gaps: .32, plat: .08, inim: .9, voa: .35, metais: ['As', 'Hg', 'Cr', 'Pb'], tema: 'industria', desafios: [[.2, 'hh'], [.38, 'v'], [.53, 'hh'], [.66, 'h'], [.76, 'v']] }
+  ]
 ];
+const CONTAGEM = [{ itens: 14, inim: 9, sem: 10 }, { itens: 17, inim: 11, sem: 11 }, { itens: 22, inim: 14, sem: 12 }];
+let FASES = MUNDOS.map((v, k) => ({ ...v[0], cont: CONTAGEM[k], variante: 0 }));
+function sortearRota() {
+  const ult = ls.get('solo_rota', []);
+  const rota = MUNDOS.map((vs, k) => { const op = vs.map((_, i) => i).filter(i => i !== ult[k]); return op[Math.floor(Math.random() * op.length)]; });
+  ls.set('solo_rota', rota);
+  return rota.map((i, k) => ({ ...MUNDOS[k][i], cont: CONTAGEM[k], variante: i }));
+}
 const TEMAS = {
   praca: { ceu: ['#8fd0ee', '#dff3fb'], longe: '#b4dcc6', perto: '#93c9a6', topo: ['grama_t1', 'grama_t2', 'grama_t3'], fill: 'grama_f', base: '#c99869', decor: ['arvore', 'arvore', 'pinho', 'pinho', 'd_arvore', 'd_arvore', 'd_arvore', 'arbusto', 'd_banco', 'd_academia', 'd_bike', 'd_balanco', 'd_poste', 'd_fonte'] },
   avenida: { ceu: ['#f2a97c', '#fde3cb'], longe: '#e2ab8f', perto: '#c48e7a', topo: ['cinza_t'], fill: 'cinza_f', base: '#acc0c1', decor: ['cerca', 'arbusto', 'poste', 'poste', 'caixa'] },
@@ -1111,7 +1156,7 @@ function gerarFase(f) {
   for (let xx = 0; xx < L; xx++) if (alt[xx] >= 0) for (let y = alt[xx]; y < ROWS; y++) sol[y][xx] = 1;
   const itens = [], inim = [], plats = [], semCol = [];
   for (let xx = 14; xx < L - 28; xx++) {
-    if (alt[xx] >= 0 && alt[xx + 1] === alt[xx] && alt[xx + 2] === alt[xx] && r() < .09) {
+    if (alt[xx] >= 0 && alt[xx + 1] === alt[xx] && alt[xx + 2] === alt[xx] && r() < (f.plat || .09)) {
       const py = alt[xx] - 3, w = 3 + Math.floor(r() * 2);
       for (let i = 0; i < w; i++) sol[py][xx + i] = 2;
       plats.push({ x: xx, y: py, w });
@@ -1135,7 +1180,19 @@ function gerarFase(f) {
       inim.push({ tipo: 'anda', x: xx * T, y: alt[xx] * T - 13, w: 18, h: 13, vx: -34, metal, vivo: true, t: 0 });
     }
   }
-  for (const e of extras) itens.push({ x: Math.round(e.x), y: Math.round(e.y), id: LIXO_PLAT[Math.floor(r() * LIXO_PLAT.length)], ok: false });
+  for (const e of extras) itens.unshift({ x: Math.round(e.x), y: Math.round(e.y), id: LIXO_PLAT[Math.floor(r() * LIXO_PLAT.length)], ok: false });
+  const ra = mulberry32(f.seed * 53 + 7);
+  const livre = (xx, ty) => xx > 0 && xx < L && ty > 1 && !sol[ty][xx] && !sol[ty - 1][xx];
+  const perto = (lista, px) => lista.some(o => Math.abs((o.bx !== undefined ? o.bx : o.x) - px) < T * 1.5);
+  const ajustar = (lista, n, fixos, novo) => { while (lista.length > n) lista.splice(fixos + Math.floor(ra() * (lista.length - fixos)), 1); for (let t = 0; lista.length < n && t < 1500; t++) { const o = novo(); if (o) lista.push(o); } };
+  if (f.cont) {
+    ajustar(itens, f.cont.itens, extras.length, () => { const xx = 12 + Math.floor(ra() * (L - 40)); if (alt[xx] < 0) return null; const ty = alt[xx] - (ra() < .5 ? 1 : 2); if (!livre(xx, ty) || perto(itens, xx * T)) return null; return { x: xx * T + 3, y: ty * T + 5, id: LIXO_PLAT[Math.floor(ra() * LIXO_PLAT.length)], ok: false }; });
+    ajustar(inim, f.cont.inim, 0, () => {
+      const xx = 18 + Math.floor(ra() * (L - 46)); if (perto(inim, xx * T)) return null; const metal = f.metais[Math.floor(ra() * f.metais.length)];
+      if (alt[xx] >= 0 && alt[xx + 1] === alt[xx] && alt[xx - 1] === alt[xx] && ra() > f.voa) return { tipo: 'anda', x: xx * T, y: alt[xx] * T - 13, w: 18, h: 13, vx: -34, metal, vivo: true, t: 0 };
+      const base = alt[xx] >= 0 ? alt[xx] : 11; return { tipo: 'voa', x: xx * T, y: (base - 3) * T, bx: xx * T, by: (base - 3) * T, w: 17, h: 17, metal, vivo: true, t: ra() * 6 };
+    });
+  }
   const chao = alt[L - 1] * T;
   const lixeiras = [['esp', L - 17], ['rec', L - 13], ['org', L - 9]].map(([t, tx]) => ({ t, x: tx * T, y: chao - 32, w: 26, h: 32, pisca: 0 }));
   const meio = Math.floor(L / 2); let cpx = meio; while (cpx < L - 25 && alt[cpx] < 0) cpx++;
@@ -1152,6 +1209,7 @@ function gerarFase(f) {
   const rs = mulberry32(f.seed * 31);
   for (let xx = 7; xx < L - 26; xx += 8 + Math.floor(rs() * 6)) { if (alt[xx] < 0 || sol[alt[xx] - 1][xx] || sol[alt[xx] - 2][xx]) continue; const alto = rs() < .45; semCol.push({ x: xx * T + 5, y: (alt[xx] - (alto ? 2 : 1)) * T + 6, ok: false }); }
   for (const pl of plats) semCol.push({ x: (pl.x + pl.w - 1) * T + 5, y: (pl.y - 1) * T + 6, ok: false });
+  if (f.cont) ajustar(semCol, f.cont.sem, 0, () => { const xx = 7 + Math.floor(ra() * (L - 34)); if (alt[xx] < 0) return null; const ty = alt[xx] - (ra() < .45 ? 2 : 1); if (!livre(xx, ty) || perto(semCol, xx * T + 5)) return null; return { x: xx * T + 5, y: ty * T + 6, ok: false }; });
   return { L, sol, alt, itens, inim, lixeiras, plats, decor, moveis, semCol, marcos, toxico: !!f.desafios, bandeira: { x: (L - 4) * T, y: chao - 42 }, cp: { x: cpx * T, y: alt[cpx] * T, ok: false }, fundo, chao };
 }
 
@@ -1196,6 +1254,7 @@ function cacheFase(l, f, tm) {
   l.cache = C; return C;
 }
 function criarPlataforma() {
+  FASES = sortearRota();
   const g = { pontos: 0, tempo: TEMPO_PLAT, vidas: 3, fase: 0, fim: false, venceu: false, derrotados: 0, entregues: 0, largados: 0,
     carrega: { esp: 0, rec: 0, org: 0 }, parts: [], vistos: {}, sementes: [], brotos: [], mudas: [], semMao: 3, arvores: 0, avisoSem: 0, t: 0, cam: 0, lv: null, p: null, aviso: 0 };
   const TIPO_DE = id => ITENS.find(i => i.id === id).t;
@@ -1345,6 +1404,7 @@ function criarPlataforma() {
       }
     }
     if (!l.cp.ok && p.x > l.cp.x) { l.cp.ok = true; som('moeda'); }
+    for (const m of l.marcos) if (m.k === 'm_siol_n' && !m.visto && p.x > m.x + 40) { m.visto = true; som('vitoria'); toast('Você achou um easter egg: a Siol Alimentos!', 'info', 3200); for (let k = 0; k < 14; k++) g.parts.push({ x: m.x + 20 + k * 10, y: m.y - 60 - (k % 3) * 8, t: -k * .03, txt: '★', cor: k % 2 ? '#d9262e' : '#4fae3a' }); }
     if (bate(p, { x: l.bandeira.x, y: l.bandeira.y, w: 12, h: 42 })) { concluirFase(); return; }
     for (const b of g.brotos) b.t += dt;
     particulas(g, dt);
@@ -1711,7 +1771,7 @@ const JOGOS = {
       ['garrafa', 'Encoste no <b>lixo</b> pra recolher. No fim da fase, passe pelas <b>3 lixeiras</b> pra entregar. Item perigoso não entregue tira pontos.'],
       ['slime1_Pb', 'Gosmas e fantasmas são <b>metais pesados</b>. Pule em cima deles ou acerte uma semente. Encostar tira 1 das suas <b>3 vidas</b>.'],
       ['semente_g', 'Pegue <b>sementes</b> pelo caminho e jogue com B. Ao cair no chão, ela vira uma <b>muda de árvore</b>. As árvores plantadas contam no final.'],
-      ['tabua_e', 'Na Zona Industrial tem <b>valas tóxicas</b>. Use as <b>plataformas que se mexem</b> e os elevadores pra atravessar.'],
+      ['tabua_e', 'As fases <b>mudam a cada partida</b>. Na fábrica tem <b>valas tóxicas</b>. Use as <b>plataformas que se mexem</b> e os elevadores pra atravessar.'],
       ['flag_l1', 'Quanto <b>mais rápido</b> terminar, mais pontos: cada segundo que sobra vale 60. A bandeira verde no meio da fase é onde você volta se morrer.']
     ],
     ctrl: [['◀ ▶', 'andar'], ['A', 'pular (segure pra ir mais alto)'], ['B', 'jogar semente']],
