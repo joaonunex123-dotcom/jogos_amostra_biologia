@@ -495,6 +495,13 @@ const VIBRA = { vida: 120, erro: 50, dano: 60, derrota: [90, 60, 180], vitoria: 
 function som(tipo) {
   try { if (TOQUE && navigator.vibrate && VIBRA[tipo]) navigator.vibrate(VIBRA[tipo]); } catch (e) {}
   try {
+    if (Input.padOn && VIBRA[tipo] && navigator.getGamepads) for (const gp of navigator.getGamepads()) {
+      const va = gp && gp.vibrationActuator; if (!va || !va.playEffect) continue;
+      const d = [].concat(VIBRA[tipo]).reduce((a2, b2) => a2 + b2, 0);
+      va.playEffect('dual-rumble', { duration: d, strongMagnitude: tipo === 'ok' ? .15 : .6, weakMagnitude: .5 }).catch(() => {});
+    }
+  } catch (e) {}
+  try {
     if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
     if (actx.state === 'suspended') actx.resume();
     const S = { ok: [[660, .06], [990, .09]], erro: [[180, .18]], pulo: [[420, .05], [640, .05]], moeda: [[880, .04], [1320, .07]],
@@ -644,6 +651,7 @@ function criarSprite(nome, linhas, pal) {
 function iniciarSprites() {
   for (const k in ART) criarSprite(k, ART[k], PAL);
   for (const m in METAIS) criarSprite('nuv_' + m, NUVEM, { ...PAL, x: METAIS[m].cor, X: METAIS[m].esc });
+  criarMarcos();
   document.querySelectorAll('img[data-spr]').forEach(img => { const s = SPR[img.dataset.spr]; if (s) img.src = s.toDataURL(); });
 }
 /* Arte de cenário e personagens: "Platformer Art Pixel Redux" de Kenney (www.kenney.nl), licença CC0 */
@@ -698,6 +706,105 @@ function desenhaParticulas(ctx, g) {
   for (const p of g.parts) { ctx.globalAlpha = 1 - p.t / .9; txt(ctx, p.txt, p.x, p.y, { tam: 11, cor: p.cor, al: 'center' }); }
   ctx.globalAlpha = 1;
 }
+
+/* ================= MARCOS DE BARUERI (pixel art desenhada em código) ================= */
+const FONTE3 = { A: '010101111101101', B: '110101110101110', C: '011100100100011', D: '110101101101110', E: '111100110100111', F: '111100110100100', I: '111010010010111', L: '100100100100111', N: '110101101101101', O: '010101101101010', P: '110101110100100', R: '110101110101101', S: '011100010001110', T: '111010010010010', U: '101101101101111', M: '101111111101101', ' ': '000000000000000' };
+function letreiro(x, s, px, py, cor) { x.fillStyle = cor; [...s].forEach((ch, k) => { const g = FONTE3[ch] || FONTE3[' ']; for (let i = 0; i < 15; i++) if (g[i] === '1') x.fillRect(px + k * 4 + (i % 3), py + Math.floor(i / 3), 1, 1); }); }
+function novaTela(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; return [c, x]; }
+function elipse(x, cx, cy, rx, ry, cor) { x.fillStyle = cor; for (let yy = -ry; yy <= ry; yy++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (yy * yy) / (ry * ry)))); x.fillRect(cx - w, cy + yy, w * 2, 1); } }
+function palmeira(x, px, base, alt) {
+  x.fillStyle = '#6b4a2a'; for (let k = 0; k < alt; k++) x.fillRect(px + Math.round(Math.sin(k / 9) * 1.5), base - k, 2, 1);
+  x.fillStyle = '#4e3420'; for (let k = 2; k < alt; k += 3) x.fillRect(px + Math.round(Math.sin(k / 9) * 1.5), base - k, 2, 1);
+  const tx = px + Math.round(Math.sin(alt / 9) * 1.5), ty = base - alt;
+  const folhas = [[-1, 0], [1, 0], [-1, -1], [1, -1], [0, -1]];
+  for (const [dx, dy] of folhas) for (let k = 0; k < 9; k++) { x.fillStyle = k % 3 === 0 ? '#2f6b2a' : '#4f9a3a'; x.fillRect(tx + 1 + dx * k, ty + Math.round(dy * k * .6 + (k * k) / (dy ? 14 : 9)), 2, 1); }
+  x.fillStyle = '#6b4a2a'; x.fillRect(tx, ty, 3, 2);
+}
+function arvoreRedonda(x, px, base) { x.fillStyle = '#5a3d24'; x.fillRect(px, base - 8, 2, 8); elipse(x, px + 1, base - 13, 6, 6, '#3f7a2e'); elipse(x, px, base - 14, 4, 4, '#5aa83a'); x.fillStyle = '#86c95a'; x.fillRect(px - 2, base - 17, 2, 1); }
+
+function desenhaETEC() {
+  const [c, x] = novaTela(160, 92); const B = 92;
+  // torre cilíndrica
+  x.fillStyle = '#9aa3ab'; x.fillRect(146, 6, 9, B - 6); x.fillStyle = '#c3cad0'; x.fillRect(147, 6, 3, B - 6); x.fillStyle = '#7a838b'; x.fillRect(153, 6, 2, B - 6);
+  x.fillStyle = '#6b737a'; x.fillRect(145, 4, 11, 3); for (let yy = 12; yy < B; yy += 8) { x.fillStyle = '#8a939b'; x.fillRect(146, yy, 9, 1); }
+  // bloco direito alto com brises e faixa turquesa curva
+  x.fillStyle = '#cfd5da'; x.fillRect(88, 20, 58, B - 20);
+  x.fillStyle = '#b4bcc3'; for (let xx = 90; xx < 144; xx += 3) x.fillRect(xx, 30, 1, B - 42);
+  x.fillStyle = '#2fb3b3'; for (let xx = 86; xx < 148; xx++) { const t = Math.round(4 * Math.sin((xx - 86) / 62 * Math.PI)); x.fillRect(xx, 16 - t, 1, 6 + t); }
+  x.fillStyle = '#7fd8d4'; for (let xx = 86; xx < 148; xx++) { const t = Math.round(4 * Math.sin((xx - 86) / 62 * Math.PI)); x.fillRect(xx, 16 - t, 1, 1); }
+  x.fillStyle = '#d9483b'; x.fillRect(132, 22, 14, B - 34);  x.fillStyle = '#b23a2f'; x.fillRect(144, 22, 2, B - 34);
+  // bloco principal (2 andares) com painéis coloridos
+  x.fillStyle = '#e4e8eb'; x.fillRect(4, 30, 88, B - 30); x.fillStyle = '#c9cfd4'; x.fillRect(4, 30, 88, 2); x.fillStyle = '#f4f6f7'; x.fillRect(4, 32, 88, 1);
+  const paineis = [['#e8843a', 6, 46, 16, 22], ['#3fb8a8', 24, 40, 14, 28], ['#9fd36a', 40, 50, 10, 18], ['#e8843a', 52, 44, 12, 24], ['#3fb8a8', 66, 48, 10, 20], ['#d9483b', 78, 42, 12, 26]];
+  for (const [cor, px, py, w, h] of paineis) { x.fillStyle = cor; x.fillRect(px, py, w, h); x.fillStyle = 'rgba(255,255,255,.25)'; x.fillRect(px, py, w, 1); x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(px + w - 1, py, 1, h); }
+  x.fillStyle = '#3a5a78'; for (const px of [8, 26, 42, 54, 68, 80]) { x.fillRect(px, 72, 8, 6); x.fillStyle = '#5f86a8'; x.fillRect(px, 72, 8, 1); x.fillStyle = '#3a5a78'; }
+  // letreiro
+  x.fillStyle = '#ffffff'; x.fillRect(6, 33, 84, 9); x.fillStyle = '#d9483b'; x.fillRect(6, 40, 84, 2);
+  letreiro(x, 'ETEC', 8, 34, '#3a7ab8'); letreiro(x, 'ANTONIO FURLAN', 26, 34, '#d9483b');
+  // marquise e entrada
+  x.fillStyle = '#9aa3ab'; x.fillRect(30, 80, 40, 2); x.fillStyle = '#2a3440'; x.fillRect(42, 82, 16, B - 82); x.fillStyle = '#4c6a86'; x.fillRect(43, 83, 6, B - 84); x.fillRect(51, 83, 6, B - 84);
+  // calçada, palmeiras, bandeira
+  x.fillStyle = '#b9b2a2'; x.fillRect(0, B - 3, 160, 3);
+  x.fillStyle = '#c9d1db'; x.fillRect(100, 40, 1, B - 43); x.fillStyle = '#e0573f'; x.fillRect(101, 40, 7, 2); x.fillStyle = '#ffffff'; x.fillRect(101, 42, 7, 1); x.fillStyle = '#1b1712'; x.fillRect(101, 43, 7, 2);
+  palmeira(x, 2, B - 3, 40); palmeira(x, 112, B - 3, 46); palmeira(x, 124, B - 3, 38);
+  return c;
+}
+
+function desenhaPrefeitura() {
+  const [c, x] = novaTela(176, 104); const B = 104;
+  // prédios brancos laterais
+  for (const px of [0, 146]) {
+    x.fillStyle = '#e9edf0'; x.fillRect(px, 40, 30, B - 40); x.fillStyle = '#ffffff'; x.fillRect(px, 40, 30, 2);
+    for (let yy = 48; yy < B - 8; yy += 9) { x.fillStyle = '#3d5f82'; x.fillRect(px + 2, yy, 26, 4); x.fillStyle = '#6f96bd'; x.fillRect(px + 2, yy, 26, 1); x.fillStyle = '#c9d0d6'; for (let k = px + 6; k < px + 28; k += 6) x.fillRect(k, yy, 1, 4); }
+  }
+  // alas de tijolo
+  x.fillStyle = '#8f4530'; x.fillRect(30, 30, 116, B - 30);
+  x.fillStyle = '#7a3a28'; for (let yy = 34; yy < B; yy += 3) x.fillRect(30, yy, 116, 1);
+  for (let yy = 31; yy < B; yy += 6) for (let xx = 30 + ((yy / 3) % 2 ? 2 : 5); xx < 146; xx += 6) { x.fillStyle = '#a3543a'; x.fillRect(xx, yy, 1, 2); }
+  x.fillStyle = '#f2f4f6'; x.fillRect(28, 27, 120, 4); x.fillStyle = '#c9d0d6'; x.fillRect(28, 30, 120, 1);
+  // torre central de vidro com moldura escura
+  const tx = 68, tw = 40;
+  x.fillStyle = '#23272d'; x.fillRect(tx - 4, 2, tw + 8, B - 2);
+  for (let yy = 16; yy < B - 18; yy++) for (let xx = tx; xx < tx + tw; xx++) { const f = ((xx - tx) / tw); const v = (yy - 16) / (B - 34); x.fillStyle = (xx + yy * 2) % 23 < 3 ? '#8fd2e0' : (f + v * .3 < .45 ? '#2f9fb6' : f < .8 ? '#2a87a0' : '#1f6d84'); x.fillRect(xx, yy, 1, 1); }
+  x.fillStyle = '#1c5a6c'; for (let yy = 22; yy < B - 18; yy += 6) x.fillRect(tx, yy, tw, 1); for (let xx = tx + 8; xx < tx + tw; xx += 8) x.fillRect(xx, 16, 1, B - 34);
+  // faixa com BARUERI e brasão
+  x.fillStyle = '#f4f6f7'; x.fillRect(tx, 5, tw, 10);
+  letreiro(x, 'BARUERI', tx + 7, 8, '#23272d'); x.fillStyle = '#2f7a3a'; x.fillRect(tx + 2, 7, 3, 7); x.fillStyle = '#f0c03a'; x.fillRect(tx + 3, 9, 1, 3);
+  // marquise branca
+  x.fillStyle = '#ffffff'; x.fillRect(tx - 10, B - 20, tw + 20, 4); x.fillStyle = '#c9d0d6'; x.fillRect(tx - 10, B - 17, tw + 20, 1);
+  x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(tx - 6, B - 16, tw + 12, 2);
+  x.fillStyle = '#16323d'; x.fillRect(tx + 2, B - 15, tw - 4, 12); x.fillStyle = '#3f7f95'; for (let xx = tx + 4; xx < tx + tw - 4; xx += 6) x.fillRect(xx, B - 14, 4, 10);
+  // calçada e palmeiras
+  x.fillStyle = '#c4beb0'; x.fillRect(0, B - 3, 176, 3);
+  palmeira(x, 40, B - 3, 50); palmeira(x, 130, B - 3, 54); palmeira(x, 58, B - 3, 34); arvoreRedonda(x, 160, B - 3); arvoreRedonda(x, 14, B - 3);
+  return c;
+}
+
+function desenhaPracaArtes() {
+  const [c, x] = novaTela(170, 98); const B = 98;
+  // corpo amarelo
+  x.fillStyle = '#f2c230'; x.fillRect(8, 34, 154, B - 37);
+  x.fillStyle = '#dca91f'; x.fillRect(140, 34, 22, B - 37); x.fillStyle = '#ffd95a'; x.fillRect(8, 34, 154, 1);
+  // ondas do telhado (vermelho, laranja, amarelo)
+  const onda = (xx, amp, fase, base) => base - Math.round(amp * (Math.sin((xx - 8) / 154 * Math.PI * 1.15 + fase) * .55 + Math.exp(-((xx - 112) ** 2) / 500) * 1.0));
+  const camadas = [['#d9382e', 22, 0, 30], ['#ee7a2a', 16, .3, 33], ['#f7a823', 10, .6, 36]];
+  for (const [cor, amp, fase, base] of camadas) { x.fillStyle = cor; for (let xx = 8; xx < 162; xx++) { const top = onda(xx, amp, fase, base); x.fillRect(xx, top, 1, Math.max(0, base + 4 - top)); } }
+  x.fillStyle = '#ff9a8a'; for (let xx = 8; xx < 162; xx++) x.fillRect(xx, onda(xx, 22, 0, 30), 1, 1);
+  // janela oval grande e janelas redondas
+  elipse(x, 44, 66, 26, 15, '#f6e7b0'); elipse(x, 44, 66, 24, 13, '#25384a');
+  x.fillStyle = '#3c5a74'; for (let xx = 24; xx < 66; xx += 6) x.fillRect(xx, 54, 1, 24); x.fillStyle = '#ffe58a'; x.fillRect(30, 72, 4, 3); x.fillRect(46, 70, 5, 4); x.fillRect(56, 73, 3, 3);
+  elipse(x, 102, 62, 9, 9, '#f6e7b0'); elipse(x, 102, 62, 8, 8, '#25384a'); elipse(x, 126, 66, 7, 7, '#f6e7b0'); elipse(x, 126, 66, 6, 6, '#25384a');
+  x.fillStyle = '#5f86a8'; x.fillRect(98, 58, 3, 2); x.fillRect(123, 63, 2, 2);
+  // praça com canteiros orgânicos
+  x.fillStyle = '#e6e0d2'; x.fillRect(0, B - 6, 170, 6);
+  for (const [cx, rx] of [[20, 12], [70, 16], [118, 10], [152, 12]]) { elipse(x, cx, B - 4, rx, 2, '#5aa83a'); elipse(x, cx - 2, B - 5, rx - 4, 1, '#86c95a'); }
+  x.fillStyle = '#4b5363'; for (const px of [56, 90, 140]) { x.fillRect(px, B - 22, 1, 18); x.fillStyle = '#fff2b0'; x.fillRect(px - 1, B - 23, 3, 2); x.fillStyle = '#4b5363'; }
+  // placa
+  x.fillStyle = '#1b1712'; x.fillRect(4, B - 18, 62, 9); x.fillStyle = '#f2c230'; letreiro(x, 'PRACA DAS ARTES', 6, B - 16, '#f2c230');
+  return c;
+}
+function nevoa(src, cor, a) { const [c, x] = novaTela(src.width, src.height); x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-atop'; x.globalAlpha = a; x.fillStyle = cor; x.fillRect(0, 0, c.width, c.height); return c; }
+function criarMarcos() { SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#dff3fb', .12); SPR.m_artes_n = nevoa(SPR.m_artes, '#dff3fb', .12); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .14); }
 
 /* ================= JOGO 1: DESCARTE CERTO ================= */
 const LIX = {
@@ -843,8 +950,8 @@ function lixeiraMini(ctx, x, y, t, pisca) {
 /* ================= JOGO 2: PATRULHA BARUERI (plataforma) ================= */
 const T = 21, ROWS = 13, TEMPO_PLAT = 200;
 const FASES = [
-  { nome: 'Praça', len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
-  { nome: 'Avenida', len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
+  { nome: 'Praça', marcos: [['m_etec_n', 0, 250], ['m_artes_n', .82, 200]], len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
+  { nome: 'Avenida', marcos: [['m_prefeitura_n', .5, 170]], len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
   { nome: 'Zona industrial', len: 156, seed: 37, gaps: .3, inim: .85, voa: .4, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria', desafios: [[.2, 'h'], [.36, 'v'], [.6, 'hh'], [.75, 'v'], [.84, 'h']] }
 ];
 const TEMAS = {
@@ -1119,6 +1226,12 @@ function criarPlataforma() {
           }
         }
       }
+    }
+    if (f.marcos) for (const [k, fr, sx] of f.marcos) {
+      const sp = SPR[k]; if (!sp) continue; const par = .6, camAlvo = fr * (l.L * T - W);
+      const x = Math.round(camAlvo * par + sx - cam * par); if (x > W || x + sp.width < 0) continue;
+      ctx.fillStyle = tm.perto; ctx.fillRect(x - 8, 194, sp.width + 16, H - 194); ctx.beginPath(); ctx.ellipse(x + sp.width / 2, 196, sp.width / 2 + 24, 10, 0, Math.PI, 0); ctx.fill();
+      ctx.drawImage(sp, x, 196 - sp.height);
     }
     for (const d of l.decor) {
       const x = d.x - cam; if (x < -70 || x > W + 10) continue;
@@ -1804,7 +1917,7 @@ async function atualizarPlacar() {
   $('#hs-status').textContent = !Rede.ok ? 'Recordes deste aparelho.' : Ranking.online ? 'Ao vivo: PC e celulares juntos.' : 'Sem internet: mostrando os últimos recordes salvos.';
 }
 function irPlacar() { Jogo.g = null; Telas.show('placar'); atualizarPlacar(); }
-function irJogos() { Jogo.g = null; Telas.show('menu'); $('#girar-tela').hidden = true; Jogo.girando = false; try { screen.orientation.unlock(); } catch (e) {} }
+function irJogos() { Jogo.g = null; Telas.show('menu', Jogo.id ? `[data-jogo="${Jogo.id}"]` : undefined); $('#girar-tela').hidden = true; Jogo.girando = false; try { screen.orientation.unlock(); } catch (e) {} }
 function irMenu() { if (HOME === 'placar') irPlacar(); else irJogos(); }
 function urlSite() {
   if (CONFIG.SITE_URL) return CONFIG.SITE_URL;
