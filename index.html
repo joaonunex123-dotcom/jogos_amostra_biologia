@@ -842,7 +842,26 @@ function desenhaParque() {
   x.fillStyle = '#86c95a'; x.fillRect(6, 3, 3, 4); x.fillStyle = '#e8d9a8'; x.fillRect(6, 0, 3, 3); x.fillStyle = '#1b1712'; x.fillRect(10, 5, 2, 1);
   SPR.d_ciclista = c;
 }
-function criarMarcos() { desenhaParque(); SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#fde3cb', .14); SPR.m_artes_n = nevoa(SPR.m_artes, '#fde3cb', .1); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .14); }
+function desenhaArvores() {
+  let [c, x] = novaTela(14, 22);
+  x.fillStyle = '#4e3420'; x.fillRect(6, 11, 3, 11); x.fillStyle = '#7a5230'; x.fillRect(6, 11, 1, 11);
+  elipse(x, 7, 7, 7, 7, '#2f6b2a'); elipse(x, 7, 6, 6, 6, '#3f8a34'); elipse(x, 6, 5, 4, 4, '#5aa83a'); x.fillStyle = '#86c95a'; x.fillRect(4, 2, 2, 1); x.fillRect(3, 3, 1, 2);
+  x.fillStyle = '#4e3420'; x.fillRect(4, 21, 7, 1);
+  SPR.muda = c;
+  [c, x] = novaTela(30, 40);
+  x.fillStyle = '#5a3d24'; x.fillRect(13, 22, 4, 18); x.fillStyle = '#7a5230'; x.fillRect(13, 22, 1, 18);
+  elipse(x, 15, 14, 14, 13, '#2f6b2a'); elipse(x, 14, 13, 12, 11, '#3f8a34'); elipse(x, 11, 10, 7, 6, '#5aa83a'); elipse(x, 21, 16, 5, 4, '#4f9a3a');
+  x.fillStyle = '#86c95a'; x.fillRect(8, 6, 3, 1); x.fillRect(7, 7, 1, 2);
+  SPR.d_arvore = c;
+  [c, x] = novaTela(26, 34);
+  x.fillStyle = '#6a8a5a'; x.fillRect(12, 22, 3, 12); elipse(x, 13, 13, 12, 12, '#7fae7f'); elipse(x, 11, 11, 8, 8, '#93c193');
+  SPR.d_arvore_g = c;
+  [c, x] = novaTela(18, 38);
+  x.fillStyle = '#6a8a5a'; x.fillRect(8, 30, 3, 8);
+  for (let k = 0; k < 4; k++) { const w = 3 + k * 2, y0 = 4 + k * 7; x.fillStyle = '#6f9f72'; for (let q = 0; q < 9; q++) x.fillRect(9 - Math.round(w * q / 8), y0 + q, Math.round(w * q / 8) * 2 + 1, 1); }
+  SPR.d_pinheiro = c;
+}
+function criarMarcos() { desenhaParque(); desenhaArvores(); SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#fde3cb', .06); SPR.m_artes_n = nevoa(SPR.m_artes, '#fde3cb', .05); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .06); }
 
 /* ================= JOGO 1: DESCARTE CERTO ================= */
 const LIX = {
@@ -989,11 +1008,11 @@ function lixeiraMini(ctx, x, y, t, pisca) {
 const T = 21, ROWS = 13, TEMPO_PLAT = 200;
 const FASES = [
   { nome: 'Praça', parque: true, len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
-  { nome: 'Avenida', marcos: [['m_etec_n', 0, 250], ['m_prefeitura_n', .45, 170], ['m_artes_n', .85, 190]], len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
+  { nome: 'Avenida', marcos: [['m_etec_n', .1], ['m_prefeitura_n', .45], ['m_artes_n', .76]], len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
   { nome: 'Zona industrial', len: 156, seed: 37, gaps: .3, inim: .85, voa: .4, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria', desafios: [[.2, 'h'], [.36, 'v'], [.6, 'hh'], [.75, 'v'], [.84, 'h']] }
 ];
 const TEMAS = {
-  praca: { ceu: ['#8fd0ee', '#dff3fb'], longe: '#b4dcc6', perto: '#93c9a6', topo: ['grama_t1', 'grama_t2', 'grama_t3'], fill: 'grama_f', base: '#c99869', decor: ['arbusto', 'arvore', 'pinho', 'cog1', 'd_banco', 'd_academia', 'd_bike', 'd_balanco', 'd_poste', 'd_fonte', 'd_banco', 'd_poste'] },
+  praca: { ceu: ['#8fd0ee', '#dff3fb'], longe: '#b4dcc6', perto: '#93c9a6', topo: ['grama_t1', 'grama_t2', 'grama_t3'], fill: 'grama_f', base: '#c99869', decor: ['arvore', 'arvore', 'pinho', 'pinho', 'd_arvore', 'd_arvore', 'd_arvore', 'arbusto', 'd_banco', 'd_academia', 'd_bike', 'd_balanco', 'd_poste', 'd_fonte'] },
   avenida: { ceu: ['#f2a97c', '#fde3cb'], longe: '#e2ab8f', perto: '#c48e7a', topo: ['cinza_t'], fill: 'cinza_f', base: '#acc0c1', decor: ['cerca', 'arbusto', 'poste', 'poste', 'caixa'] },
   industria: { ceu: ['#a996c4', '#ece4f3'], longe: '#ab9cbf', perto: '#8d7fa3', topo: ['roxo_t'], fill: 'roxo_f', base: '#bbcbcc', decor: ['perigo', 'caixa', 'perigo', 'cerca', 'poste'] }
 };
@@ -1036,6 +1055,18 @@ function gerarFase(f) {
     let prev = alt[0];
     for (let k = 1; k < L; k++) { if (alt[k] < 0) continue; if (alt[k] < prev - 2 && !subida.has(k)) alt[k] = prev - 2; prev = alt[k]; }
   }
+  const marcos = [];
+  if (f.marcos) {
+    for (const [k, fr] of f.marcos) {
+      const sp = SPR[k]; if (!sp) continue;
+      const x0 = Math.floor(L * fr), wt = Math.ceil(sp.width / T) + 2;
+      let h = 10; for (let q = x0 - 1; q >= 0; q--) if (alt[q] >= 0) { h = alt[q]; break; }
+      for (let q = x0 - 1; q < x0 + wt; q++) alt[q] = h;
+      marcos.push({ k, x: x0 * T + Math.round((wt * T - sp.width) / 2), y: h * T, x0, x1: x0 + wt });
+    }
+    let prev = alt[0];
+    for (let q = 1; q < L; q++) { if (alt[q] < 0) continue; if (alt[q] < prev - 2) alt[q] = prev - 2; prev = alt[q]; }
+  }
   for (let xx = 0; xx < L; xx++) if (alt[xx] >= 0) for (let y = alt[xx]; y < ROWS; y++) sol[y][xx] = 1;
   const itens = [], inim = [], plats = [], semCol = [];
   for (let xx = 14; xx < L - 28; xx++) {
@@ -1070,8 +1101,9 @@ function gerarFase(f) {
   const fundo = []; const rf = mulberry32(f.seed * 7);
   for (let fx = -40; fx < L * T * .45 + W; fx += 20 + rf() * 50) fundo.push({ x: fx, w: 20 + rf() * 40, h: 30 + rf() * 80, v: rf() });
   const decor = [], rd = mulberry32(f.seed * 13), tm = TEMAS[f.tema];
-  for (let xx = 3; xx < L - 26; xx += 2 + Math.floor(rd() * 4)) {
-    if (alt[xx] < 0 || alt[xx + 1] !== alt[xx] || rd() < .3) continue;
+  for (let xx = 3; xx < L - 26; xx += (f.parque ? 2 : 2 + Math.floor(rd() * 4))) {
+    if (alt[xx] < 0 || alt[xx + 1] !== alt[xx] || rd() < (f.parque ? .2 : .3)) continue;
+    if (marcos.some(m => xx >= m.x0 - 1 && xx <= m.x1)) continue;
     const k = tm.decor[Math.floor(rd() * tm.decor.length)];
     if (k === 'arvore' && (alt[xx + 2] !== alt[xx] || alt[xx - 1] !== alt[xx])) continue;
     decor.push({ x: xx * T, y: alt[xx] * T, k });
@@ -1079,7 +1111,7 @@ function gerarFase(f) {
   const rs = mulberry32(f.seed * 31);
   for (let xx = 7; xx < L - 26; xx += 8 + Math.floor(rs() * 6)) { if (alt[xx] < 0 || sol[alt[xx] - 1][xx] || sol[alt[xx] - 2][xx]) continue; const alto = rs() < .45; semCol.push({ x: xx * T + 5, y: (alt[xx] - (alto ? 2 : 1)) * T + 6, ok: false }); }
   for (const pl of plats) semCol.push({ x: (pl.x + pl.w - 1) * T + 5, y: (pl.y - 1) * T + 6, ok: false });
-  return { L, sol, alt, itens, inim, lixeiras, plats, decor, moveis, semCol, toxico: !!f.desafios, bandeira: { x: (L - 4) * T, y: chao - 42 }, cp: { x: cpx * T, y: alt[cpx] * T, ok: false }, fundo, chao };
+  return { L, sol, alt, itens, inim, lixeiras, plats, decor, moveis, semCol, marcos, toxico: !!f.desafios, bandeira: { x: (L - 4) * T, y: chao - 42 }, cp: { x: cpx * T, y: alt[cpx] * T, ok: false }, fundo, chao };
 }
 
 function criarPlataforma() {
@@ -1268,16 +1300,17 @@ function criarPlataforma() {
     if (f.parque) {
       const yv = 170;
       ctx.fillStyle = '#86bf8f'; ctx.fillRect(0, yv, W, H - yv); ctx.fillStyle = '#79b383'; for (let xx = -(Math.round(cam * .6) % 16); xx < W; xx += 16) ctx.fillRect(xx, yv + 20, 2, 1);
+      const offA = Math.round(cam * .45) % 52;
+      for (let xx = -offA - 30, k = Math.floor(cam * .45 / 52); xx < W + 30; xx += 52, k++) { const v = ((k * 37) % 5 + 5) % 5; spr(ctx, v < 3 ? 'd_arvore_g' : 'd_pinheiro', xx + v * 4, yv + 4 - (v < 3 ? SPR.d_arvore_g.height : SPR.d_pinheiro.height), 1); }
       ctx.fillStyle = '#c8553d'; ctx.fillRect(0, yv + 6, W, 8); ctx.fillStyle = '#e8775c'; ctx.fillRect(0, yv + 6, W, 1);
       ctx.fillStyle = '#f2ead7'; const off = Math.round(cam * .6) % 24; for (let xx = -off; xx < W; xx += 24) ctx.fillRect(xx, yv + 10, 10, 1);
       const offB = Math.round(cam * .6) % 200; for (let xx = -offB; xx < W; xx += 200) { ctx.fillStyle = '#f2ead7'; ctx.fillRect(xx + 60, yv + 8, 2, 2); ctx.fillRect(xx + 66, yv + 8, 2, 2); ctx.fillRect(xx + 62, yv + 7, 4, 1); }
       for (let k = 0; k < 3; k++) { const span = W + 400, cx = (((k * 230 + g.t * (26 + k * 7)) - cam * .6) % span + span) % span - 40; spr(ctx, 'd_ciclista', Math.round(cx), yv - 7, 1); }
     }
-    if (f.marcos) for (const [k, fr, sx] of f.marcos) {
-      const sp = SPR[k]; if (!sp) continue; const par = .6, camAlvo = fr * (l.L * T - W);
-      const x = Math.round(camAlvo * par + sx - cam * par); if (x > W || x + sp.width < 0) continue;
-      ctx.fillStyle = tm.perto; ctx.fillRect(x - 8, 194, sp.width + 16, H - 194); ctx.beginPath(); ctx.ellipse(x + sp.width / 2, 196, sp.width / 2 + 24, 10, 0, Math.PI, 0); ctx.fill();
-      ctx.drawImage(sp, x, 196 - sp.height);
+    for (const m of l.marcos) {
+      const sp = SPR[m.k], x = Math.round(m.x - cam); if (!sp || x > W || x + sp.width < 0) continue;
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x + 4, m.y - 3, sp.width - 8, 3);
+      ctx.drawImage(sp, x, m.y - sp.height);
     }
     for (const d of l.decor) {
       const x = d.x - cam; if (x < -70 || x > W + 10) continue;
@@ -1338,7 +1371,7 @@ function criarPlataforma() {
       ctx.fillStyle = `rgba(255,248,200,${.45 + .2 * Math.sin(g.t * 6 + sc.x)})`; ctx.beginPath(); ctx.arc(x + 8, y + 10, 12, 0, 7); ctx.fill();
       spr(ctx, 'semente_g', x, y, 2);
     }
-    for (const m of g.mudas) { const k = Math.min(1, m.t / .35); ctx.save(); ctx.translate(Math.round(m.x - cam + KT / 2), Math.round(m.y + KT)); ctx.scale(k, k); ctx.drawImage(SPR.broto_k, -KT / 2, -KT); ctx.restore(); }
+    for (const m of g.mudas) { const k = Math.min(1, m.t / .35); ctx.save(); ctx.translate(Math.round(m.x - cam + KT / 2), Math.round(m.y + KT)); ctx.scale(k, k); ctx.drawImage(SPR.muda, -7, -22); ctx.restore(); }
     for (const it of l.itens) { if (it.ok) continue; const bob = Math.sin(g.t * 3 + it.x) * 2; spr(ctx, it.id, Math.round(it.x - cam + (16 - SPR[it.id].width) / 2), Math.round(it.y + bob + (16 - SPR[it.id].height)), 1); }
     for (const b of g.brotos) spr(ctx, 'broto_k', Math.round(b.x - cam), Math.round(Math.min(b.ya, b.y + b.t * 140)), 1);
     for (const e of l.inim) {
