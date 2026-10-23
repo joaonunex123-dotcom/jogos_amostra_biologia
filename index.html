@@ -1240,9 +1240,9 @@ function criarFito() {
       } else if (pl.tipo === 'gir') {
         pl.cheiaT = (pl.cheiaT || 0) + dt;
         if (pl.cheiaT > .6) {
-          planta[i] = null; g.colhidas++; g.pontos += 300; g.sementes = Math.min(MAX_SEM, g.sementes + 2.5); som('ok');
-          g.parts.push({ x: OX + (i % C) * CEL + 15, y: OY + Math.floor(i / C) * CEL, t: 0, txt: '+300 · +2,5 sementes', cor: '#f0c03a' });
-          if (!g.dicas.colheu && toastLivre()) { g.dicas.colheu = 1; toast('Girassol cheio foi colhido e devolveu 2,5 sementes. A planta vai pro descarte de resíduo perigoso.', 'info', 3200); }
+          planta[i] = null; g.colhidas++; g.pontos += 300; g.sementes = Math.min(MAX_SEM, g.sementes + 1); som('ok');
+          g.parts.push({ x: OX + (i % C) * CEL + 15, y: OY + Math.floor(i / C) * CEL, t: 0, txt: '+300 · +1 semente', cor: '#f0c03a' });
+          if (!g.dicas.colheu && toastLivre()) { g.dicas.colheu = 1; toast('Girassol cheio foi colhido e devolveu 1 semente. A planta vai pro descarte de resíduo perigoso.', 'info', 3200); }
         }
       } else if (pl.tipo === 'vet') {
         const a = Math.min(cont[i], .06 * dt); cont[i] -= a; g.absorvido += a; g.pontos += a * 120;
@@ -1396,7 +1396,7 @@ const JOGOS = {
     obj: 'Use plantas pra impedir que o metal das fábricas chegue no parque das crianças.',
     passos: [
       ['perigo', 'As <b>fábricas</b> soltam metal pesado no solo. Ele aparece em <b style="color:#c457d6">roxo</b> e vai escorrendo até o <b>parque</b>.'],
-      ['gir', '<b>Girassol</b> aspira o metal da casa onde está. Quando enche, é <b>colhido sozinho</b>, dá +300 pontos e <b>devolve 2,5 sementes</b>.'],
+      ['gir', '<b>Girassol</b> aspira o metal da casa onde está. Quando enche, é <b>colhido sozinho</b>, dá +300 pontos e <b>devolve 1 semente</b>.'],
       ['vet', '<b>Vetiver</b> é um muro de raízes: <b>segura o metal</b> e ele quase não passa pra frente.'],
       ['semente', 'Cada planta gasta <b>sementes</b> (girassol 2, vetiver 1). Elas voltam sozinhas com o tempo.'],
       ['90s', 'Novas fábricas ligam no meio do jogo. Aguente <b>90 segundos</b> com o parque saudável. No começo o jogo <b>mostra onde plantar</b>.']
