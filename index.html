@@ -1205,7 +1205,7 @@ function criarFito() {
       if (g.tut === 1 && g.tutT > 4) { g.tut = 2; g.tutT = 0; g.cur = { c: TUT[2].c, l: TUT[2].l }; g.tipo = 'vet'; }
       if (g.tut === 3 && g.tutT > 2.2) { g.tut = -1; g.tipo = 'gir'; }
     } else g.tempo -= dt;
-    if (g.tempo <= 0) { g.tempo = 0; g.pontos += Math.round(g.saude) * 10; g.fim = true; return; }
+    if (g.tempo <= 0) { g.tempo = 0; g.bonusSaude = Math.round(g.saude) * 10; g.bonusEco = g.saude > 0 ? Math.max(0, 50 - g.plantadas) * 150 : 0; g.pontos += g.bonusSaude + g.bonusEco; g.fim = true; return; }
     const I = Input;
     const dir = I.held.left ? [-1, 0] : I.held.right ? [1, 0] : I.held.up ? [0, -1] : I.held.down ? [0, 1] : null;
     const novo = I.pressed.left || I.pressed.right || I.pressed.up || I.pressed.down;
@@ -1354,7 +1354,7 @@ function criarFito() {
     desenhaParticulas(ctx, g);
   };
   g.hud = () => [['Pontos', Math.round(g.pontos)], ['Tempo', Math.ceil(g.tempo) + 's', g.tempo < 10], ['Sementes', `${Math.floor(g.sementes)}/${MAX_SEM}`], ['Parque', Math.ceil(g.saude) + '%', g.saude < 40]];
-  g.resumo = () => [['Plantas colocadas', g.plantadas], ['Girassóis colhidos', g.colhidas], ['Metal retirado do solo', Math.round(g.absorvido * 10) + ' kg*'], ['Saúde do parque', Math.ceil(g.saude) + '%']];
+  g.resumo = () => [['Plantas colocadas', g.plantadas], ...(g.bonusEco !== undefined ? [['Bônus de economia (menos plantas)', '+' + g.bonusEco.toLocaleString('pt-BR')], ['Bônus de saúde do parque', '+' + g.bonusSaude.toLocaleString('pt-BR')]] : []), ['Girassóis colhidos', g.colhidas], ['Metal retirado do solo', Math.round(g.absorvido * 10) + ' kg*'], ['Saúde do parque', Math.ceil(g.saude) + '%']];
   g.licao = () => 'Fitorremediação usa plantas pra limpar o solo. É barata e funciona bem em praças e parques, mas é lenta. *Unidade de jogo, não é medida real.';
   g.titulo = () => g.saude <= 0 ? 'O metal chegou no parque' : 'Parque protegido!';
   g.vitoria = () => g.saude > 0;
@@ -1399,7 +1399,7 @@ const JOGOS = {
       ['gir', '<b>Girassol</b> aspira o metal da casa onde está. Quando enche, é <b>colhido sozinho</b>, dá +300 pontos e <b>devolve 1 semente</b>.'],
       ['vet', '<b>Vetiver</b> é um muro de raízes: <b>segura o metal</b> e ele quase não passa pra frente.'],
       ['semente', 'Cada planta gasta <b>sementes</b> (girassol 2, vetiver 1). Elas voltam sozinhas com o tempo.'],
-      ['90s', 'Novas fábricas ligam no meio do jogo. Aguente <b>90 segundos</b> com o parque saudável. No começo o jogo <b>mostra onde plantar</b>.']
+      ['90s', 'Novas fábricas ligam no meio do jogo. Aguente <b>90 segundos</b> com o parque saudável. <b>Quanto menos plantas usar, maior o bônus</b> no final.']
     ],
     ctrl: [['✚', 'mover o cursor'], ['A', 'plantar'], ['B', 'trocar a planta']],
     ctrlToque: [['☝', 'toque no solo pra plantar'], ['☝', 'toque nas plantas de baixo pra trocar']],
