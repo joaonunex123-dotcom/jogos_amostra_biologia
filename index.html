@@ -804,7 +804,45 @@ function desenhaPracaArtes() {
   return c;
 }
 function nevoa(src, cor, a) { const [c, x] = novaTela(src.width, src.height); x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-atop'; x.globalAlpha = a; x.fillStyle = cor; x.fillRect(0, 0, c.width, c.height); return c; }
-function criarMarcos() { SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#dff3fb', .12); SPR.m_artes_n = nevoa(SPR.m_artes, '#dff3fb', .12); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .14); }
+function desenhaParque() {
+  let [c, x] = novaTela(38, 30);
+  x.fillStyle = '#8a939b'; x.fillRect(0, 28, 38, 2);
+  x.fillStyle = '#f0c03a'; x.fillRect(2, 6, 2, 22); x.fillRect(16, 6, 2, 22); x.fillStyle = '#c99a1e'; x.fillRect(3, 6, 1, 22); x.fillRect(17, 6, 1, 22);
+  x.fillStyle = '#3a7ab8'; x.fillRect(2, 5, 16, 2);
+  for (let k = 0; k < 17; k++) { x.fillRect(7 - Math.round(k * .25), 7 + k, 1, 1); x.fillRect(12 + Math.round(k * .25), 7 + k, 1, 1); }
+  x.fillStyle = '#f0c03a'; x.fillRect(1, 24, 6, 2); x.fillRect(13, 24, 6, 2); x.fillStyle = '#1b1712'; x.fillRect(8, 3, 4, 2);
+  x.fillStyle = '#f0c03a'; x.fillRect(24, 2, 2, 26); x.fillRect(34, 2, 2, 26); x.fillStyle = '#3a7ab8'; x.fillRect(24, 3, 12, 2); x.fillRect(26, 14, 8, 1);
+  SPR.d_academia = c;
+  [c, x] = novaTela(26, 13);
+  x.fillStyle = '#4b5363'; x.fillRect(3, 6, 2, 7); x.fillRect(21, 6, 2, 7); x.fillRect(3, 0, 1, 6); x.fillRect(22, 0, 1, 6);
+  x.fillStyle = '#a0683a'; x.fillRect(1, 1, 24, 2); x.fillRect(1, 4, 24, 1); x.fillRect(0, 7, 26, 2); x.fillStyle = '#c98a52'; x.fillRect(1, 1, 24, 1); x.fillRect(0, 7, 26, 1);
+  SPR.d_banco = c;
+  [c, x] = novaTela(24, 15);
+  const roda = (cx, cy) => { x.fillStyle = '#1b1712'; for (let a = 0; a < 40; a++) x.fillRect(Math.round(cx + Math.cos(a / 40 * 6.283) * 5), Math.round(cy + Math.sin(a / 40 * 6.283) * 5), 1, 1); x.fillStyle = '#9aa3ab'; x.fillRect(cx, cy, 1, 1); };
+  roda(6, 9); roda(18, 9);
+  x.fillStyle = '#e0573f'; for (let k = 0; k < 7; k++) { x.fillRect(6 + k, 9 - Math.round(k * .7), 1, 1); x.fillRect(11 + k, 4 + Math.round(k * .7), 1, 1); x.fillRect(6 + k * 1.7 | 0, 9, 1, 1); }
+  x.fillRect(11, 4, 1, 6); x.fillStyle = '#1b1712'; x.fillRect(9, 2, 5, 1); x.fillRect(17, 2, 3, 1); x.fillRect(17, 3, 1, 2);
+  SPR.d_bike = c;
+  [c, x] = novaTela(32, 26);
+  x.fillStyle = '#d9483b'; for (let k = 0; k < 24; k++) { x.fillRect(4 - Math.round(k * .15), 2 + k, 2, 1); x.fillRect(27 + Math.round(k * .15), 2 + k, 2, 1); }
+  x.fillRect(3, 1, 27, 2); x.fillStyle = '#9aa3ab'; for (const sx of [10, 20]) { x.fillRect(sx, 3, 1, 14); x.fillRect(sx + 5, 3, 1, 14); x.fillStyle = '#f0c03a'; x.fillRect(sx - 1, 17, 8, 2); x.fillStyle = '#9aa3ab'; }
+  SPR.d_balanco = c;
+  [c, x] = novaTela(10, 44);
+  x.fillStyle = '#2f6b4a'; x.fillRect(4, 6, 2, 38); x.fillRect(2, 42, 6, 2); x.fillStyle = '#3f8a5f'; x.fillRect(4, 6, 1, 36);
+  elipse(x, 5, 4, 4, 4, '#2f6b4a'); elipse(x, 5, 4, 3, 3, '#fff2b0');
+  SPR.d_poste = c;
+  [c, x] = novaTela(30, 22);
+  x.fillStyle = '#c9d1db'; x.fillRect(2, 14, 26, 8); x.fillStyle = '#9aa3ab'; x.fillRect(2, 14, 26, 1); x.fillRect(2, 21, 26, 1);
+  x.fillStyle = '#4a90d9'; x.fillRect(4, 15, 22, 5); x.fillStyle = '#9fd3f0'; x.fillRect(6, 16, 4, 1); x.fillRect(16, 17, 5, 1);
+  x.fillStyle = '#c9d1db'; x.fillRect(13, 4, 4, 10); x.fillStyle = '#9fd3f0'; x.fillRect(14, 0, 2, 5); x.fillRect(11, 2, 2, 3); x.fillRect(17, 2, 2, 3); x.fillRect(9, 5, 2, 3); x.fillRect(19, 5, 2, 3);
+  SPR.d_fonte = c;
+  [c, x] = novaTela(16, 16);
+  roda.call(null, 4, 11); roda(12, 11);
+  x.fillStyle = '#4a90d9'; x.fillRect(4, 11, 4, 1); x.fillRect(7, 6, 1, 5); x.fillRect(8, 7, 4, 1); x.fillRect(11, 7, 1, 4);
+  x.fillStyle = '#86c95a'; x.fillRect(6, 3, 3, 4); x.fillStyle = '#e8d9a8'; x.fillRect(6, 0, 3, 3); x.fillStyle = '#1b1712'; x.fillRect(10, 5, 2, 1);
+  SPR.d_ciclista = c;
+}
+function criarMarcos() { desenhaParque(); SPR.m_etec = desenhaETEC(); SPR.m_prefeitura = desenhaPrefeitura(); SPR.m_artes = desenhaPracaArtes(); SPR.m_etec_n = nevoa(SPR.m_etec, '#fde3cb', .14); SPR.m_artes_n = nevoa(SPR.m_artes, '#fde3cb', .1); SPR.m_prefeitura_n = nevoa(SPR.m_prefeitura, '#fde3cb', .14); }
 
 /* ================= JOGO 1: DESCARTE CERTO ================= */
 const LIX = {
@@ -950,12 +988,12 @@ function lixeiraMini(ctx, x, y, t, pisca) {
 /* ================= JOGO 2: PATRULHA BARUERI (plataforma) ================= */
 const T = 21, ROWS = 13, TEMPO_PLAT = 200;
 const FASES = [
-  { nome: 'Praça', marcos: [['m_etec_n', 0, 250], ['m_artes_n', .82, 200]], len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
-  { nome: 'Avenida', marcos: [['m_prefeitura_n', .5, 170]], len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
+  { nome: 'Praça', parque: true, len: 92, seed: 11, gaps: .14, inim: .55, voa: .15, metais: ['Pb', 'Cd'], tema: 'praca' },
+  { nome: 'Avenida', marcos: [['m_etec_n', 0, 250], ['m_prefeitura_n', .45, 170], ['m_artes_n', .85, 190]], len: 112, seed: 23, gaps: .22, inim: .65, voa: .25, metais: ['Pb', 'Cd', 'Hg'], tema: 'avenida' },
   { nome: 'Zona industrial', len: 156, seed: 37, gaps: .3, inim: .85, voa: .4, metais: ['Hg', 'Cr', 'As', 'Pb'], tema: 'industria', desafios: [[.2, 'h'], [.36, 'v'], [.6, 'hh'], [.75, 'v'], [.84, 'h']] }
 ];
 const TEMAS = {
-  praca: { ceu: ['#8fd0ee', '#dff3fb'], longe: '#b4dcc6', perto: '#93c9a6', topo: ['grama_t1', 'grama_t2', 'grama_t3'], fill: 'grama_f', base: '#c99869', decor: ['arbusto', 'arbusto', 'cog1', 'cog2', 'arvore', 'pinho', 'cerca'] },
+  praca: { ceu: ['#8fd0ee', '#dff3fb'], longe: '#b4dcc6', perto: '#93c9a6', topo: ['grama_t1', 'grama_t2', 'grama_t3'], fill: 'grama_f', base: '#c99869', decor: ['arbusto', 'arvore', 'pinho', 'cog1', 'd_banco', 'd_academia', 'd_bike', 'd_balanco', 'd_poste', 'd_fonte', 'd_banco', 'd_poste'] },
   avenida: { ceu: ['#f2a97c', '#fde3cb'], longe: '#e2ab8f', perto: '#c48e7a', topo: ['cinza_t'], fill: 'cinza_f', base: '#acc0c1', decor: ['cerca', 'arbusto', 'poste', 'poste', 'caixa'] },
   industria: { ceu: ['#a996c4', '#ece4f3'], longe: '#ab9cbf', perto: '#8d7fa3', topo: ['roxo_t'], fill: 'roxo_f', base: '#bbcbcc', decor: ['perigo', 'caixa', 'perigo', 'cerca', 'poste'] }
 };
@@ -1227,6 +1265,14 @@ function criarPlataforma() {
         }
       }
     }
+    if (f.parque) {
+      const yv = 170;
+      ctx.fillStyle = '#86bf8f'; ctx.fillRect(0, yv, W, H - yv); ctx.fillStyle = '#79b383'; for (let xx = -(Math.round(cam * .6) % 16); xx < W; xx += 16) ctx.fillRect(xx, yv + 20, 2, 1);
+      ctx.fillStyle = '#c8553d'; ctx.fillRect(0, yv + 6, W, 8); ctx.fillStyle = '#e8775c'; ctx.fillRect(0, yv + 6, W, 1);
+      ctx.fillStyle = '#f2ead7'; const off = Math.round(cam * .6) % 24; for (let xx = -off; xx < W; xx += 24) ctx.fillRect(xx, yv + 10, 10, 1);
+      const offB = Math.round(cam * .6) % 200; for (let xx = -offB; xx < W; xx += 200) { ctx.fillStyle = '#f2ead7'; ctx.fillRect(xx + 60, yv + 8, 2, 2); ctx.fillRect(xx + 66, yv + 8, 2, 2); ctx.fillRect(xx + 62, yv + 7, 4, 1); }
+      for (let k = 0; k < 3; k++) { const span = W + 400, cx = (((k * 230 + g.t * (26 + k * 7)) - cam * .6) % span + span) % span - 40; spr(ctx, 'd_ciclista', Math.round(cx), yv - 7, 1); }
+    }
     if (f.marcos) for (const [k, fr, sx] of f.marcos) {
       const sp = SPR[k]; if (!sp) continue; const par = .6, camAlvo = fr * (l.L * T - W);
       const x = Math.round(camAlvo * par + sx - cam * par); if (x > W || x + sp.width < 0) continue;
@@ -1239,7 +1285,7 @@ function criarPlataforma() {
       else if (d.k === 'pinho') { spr(ctx, 'pinho_t', x, d.y - 2 * KT, 1); spr(ctx, 'pinho_b', x, d.y - KT, 1); }
       else if (d.k === 'poste') { ctx.fillStyle = '#4b5363'; ctx.fillRect(x + 9, d.y - 46, 3, 46); ctx.fillRect(x + 9, d.y - 46, 12, 3); ctx.fillStyle = '#fff2b0'; ctx.fillRect(x + 16, d.y - 43, 6, 3); ctx.fillStyle = 'rgba(255,240,170,.18)'; ctx.beginPath(); ctx.moveTo(x + 16, d.y - 40); ctx.lineTo(x + 6, d.y); ctx.lineTo(x + 32, d.y); ctx.lineTo(x + 22, d.y - 40); ctx.fill(); }
       else if (d.k === 'cerca') { spr(ctx, 'cerca', x, d.y - KT, 1); spr(ctx, 'cerca', x + KT, d.y - KT, 1); }
-      else spr(ctx, d.k, x, d.y - KT, 1);
+      else if (SPR[d.k]) spr(ctx, d.k, x, d.y - SPR[d.k].height, 1);
     }
     const tx0 = Math.max(0, Math.floor(cam / T)), tx1 = Math.min(l.L - 1, tx0 + Math.ceil(W / T) + 1);
     if (l.toxico) for (let tx = tx0; tx <= tx1; tx++) {
