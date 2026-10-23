@@ -61,7 +61,7 @@ p{margin:0}
 .k-d{background:var(--solo-3);border:2px solid var(--linha);border-radius:5px;color:var(--texto)}
 
 /* MENU */
-.menu-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:start}
+.menu-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:32px;align-items:start}
 .marca h1{font-size:clamp(3rem,9vw,5.6rem);letter-spacing:.02em;color:var(--texto);margin-top:6px}
 .marca h1 span{color:var(--folha)}
 .marca .lead{color:var(--apagado);margin-top:10px;max-width:46ch}
@@ -88,7 +88,7 @@ p{margin:0}
 .lado{display:flex;flex-direction:column;gap:16px}
 .qr-box{background:var(--texto);color:var(--solo);border-radius:8px;padding:14px;text-align:center}
 .qr-box #qr-mini{display:grid;place-items:center;min-height:180px}
-.qr-box #qr-mini svg,.qr-grande svg{width:100%;height:auto;max-width:220px}
+.qr-box #qr-mini svg{width:100%;height:auto;max-width:260px}
 .qr-box p{font:700 1rem/1.2 var(--display);margin-top:8px}
 .qr-box small{display:block;font-size:.75rem;opacity:.75;margin-top:4px;word-break:break-all}
 .recordes{background:var(--solo-2);border:2px solid var(--linha);border-radius:8px;padding:14px}
@@ -213,14 +213,70 @@ body.toque #hud .h small{font-size:.6rem}
   .carta .thumb{flex:0 0 76px;height:76px}
   .carta .txt{min-width:0;display:flex;flex-direction:column;gap:4px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* PLACAR (tela inicial do PC) */
+#placar{gap:18px}
+.placar-topo{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:8px 24px}
+.placar-marca{font-size:clamp(2.4rem,6vw,4rem);margin-top:4px}
+.placar-marca span{color:var(--folha)}
+.placar-sub{font:700 clamp(1.4rem,3vw,2rem)/1 var(--display);color:var(--cadmio);letter-spacing:.08em;text-transform:uppercase}
+.placar-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:24px;align-items:start}
+.placar-grid.sem-qr{grid-template-columns:minmax(0,1fr)}
+.hs-colunas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.hs-col{background:var(--solo-2);border:2px solid var(--linha);border-radius:8px;padding:14px;min-width:0}
+.hs-cab{display:flex;align-items:center;gap:10px;margin-bottom:8px;min-height:44px}
+.hs-cab img{height:36px;width:auto;image-rendering:pixelated}
+.hs-cab h3{font-size:1.15rem}
+.hs-lista{list-style:none;margin:0;padding:0}
+.hs-lista li{display:grid;grid-template-columns:2.6rem minmax(0,1fr) auto;gap:8px;align-items:baseline;padding-block:9px;border-top:1px solid var(--linha);font-family:var(--display);font-size:1.25rem}
+.hs-lista li:first-child{border-top:0}
+.hs-lista .pos{color:var(--apagado);font-size:.9rem}
+.hs-lista .pt{font-variant-numeric:tabular-nums}
+.hs-lista li.ouro{font-size:1.55rem}
+.hs-lista li.ouro .nm,.hs-lista li.ouro .pt{color:var(--cadmio)}
+.hs-lista li.vago{color:var(--linha)}
+.qr-lado .qr-box{padding:18px}
+.qr-lado .qr-box p{font-size:1.25rem}
+.placar-rodape{display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px}
+.btn.grande{font-size:1.4rem;padding:18px 36px}
+.chamada{font:700 1.2rem/1 var(--display);animation:piscar 1.4s steps(2,start) infinite}
+@keyframes piscar{to{visibility:hidden}}
+
+/* NOME NO FIM DA PARTIDA */
+.nome-box{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;border:2px dashed var(--cadmio);border-radius:10px;text-align:center}
+.nome-rotulo{font:700 1.15rem/1.2 var(--display);color:var(--cadmio)}
+.nome-input{font:700 3rem/1 var(--display);letter-spacing:.3em;text-align:center;text-transform:uppercase;width:min(240px,100%);padding:10px 0 10px .3em;background:var(--solo);color:var(--texto);border:3px solid var(--cadmio);border-radius:8px;-webkit-user-select:text;user-select:text}
+.nome-input::placeholder{color:var(--linha)}
+
+@media (max-width:1000px){.placar-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:700px){.hs-colunas{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- MENU -->
-  <section class="tela rolavel" id="menu">
+  <!-- PLACAR: recordes + QR (tela inicial no PC) -->
+  <section class="tela rolavel" id="placar">
+    <header class="placar-topo">
+      <div><p class="eyebrow">ETEC Antônio Furlan · III Mostra Científica 2026</p><h1 class="placar-marca">Solo <span>Limpo</span></h1></div>
+      <p class="placar-sub">Recordes</p>
+    </header>
+    <div class="placar-grid" id="placar-grid">
+      <div class="hs-colunas" id="hs"></div>
+      <aside class="qr-lado so-pc" id="qr-lado" hidden>
+        <div class="qr-box"><div id="qr-mini"></div><p>Jogue no seu celular</p><small id="qr-url"></small></div>
+      </aside>
+    </div>
+    <div class="placar-rodape">
+      <button class="btn primario grande" data-nav id="bt-jogar">Jogar</button>
+      <button class="btn so-pc" data-nav data-tela-cheia id="bt-tela-placar">Tela cheia</button>
+      <p class="chamada so-pc">Aperte <span class="k k-a">A</span> pra jogar</p>
+    </div>
+    <p class="status" id="hs-status"></p>
+  </section>
+
+  <!-- JOGOS -->
+  <section class="tela rolavel" id="menu" hidden>
     <div class="menu-grid">
       <div>
         <header class="marca">
@@ -252,25 +308,11 @@ body.toque #hud .h small{font-size:.6rem}
         </div>
 
         <div class="linha-botoes menu-acoes">
-          <button class="btn" data-nav id="bt-rank">Ranking</button>
-          <button class="btn so-pc" data-nav id="bt-qr">Jogar no celular</button>
-          <button class="btn so-pc" data-nav id="bt-tela">Tela cheia</button>
+          <button class="btn" data-nav data-back id="bt-recordes">Recordes</button>
+          <button class="btn so-pc" data-nav data-tela-cheia id="bt-tela">Tela cheia</button>
         </div>
         <p class="dica so-pc"><span><span class="k k-d">✚</span> escolher</span><span><span class="k k-a">A</span> confirmar</span><span><span class="k k-b">B</span> voltar</span><span id="pad-status">Teclado: setas, Espaço e X</span></p>
       </div>
-
-      <aside class="lado">
-        <div class="qr-box so-pc" id="qr-box" hidden>
-          <div id="qr-mini"></div>
-          <p>Jogue no seu celular</p>
-          <small id="qr-url"></small>
-        </div>
-        <div class="recordes">
-          <h2>Recordes</h2>
-          <div id="recordes"></div>
-          <p class="status" id="rec-status"></p>
-        </div>
-      </aside>
     </div>
   </section>
 
@@ -321,33 +363,22 @@ body.toque #hud .h small{font-size:.6rem}
     </div>
   </section>
 
-  <!-- FIM -->
+  <!-- FIM: pede o nome e salva sozinho -->
   <section class="tela rolavel centro" id="fim" hidden>
     <div class="painel">
       <p class="eyebrow" id="fim-jogo"></p>
       <h2 id="fim-titulo">Fim de jogo</h2>
       <div class="placar" id="fim-pontos">0</div>
+      <div class="nome-box">
+        <p class="nome-rotulo">Seu nome no ranking (3 letras)</p>
+        <div class="iniciais so-pc" id="iniciais"></div>
+        <input id="nome-input" class="nome-input so-toque" maxlength="3" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" placeholder="AAA" aria-label="Seu nome, 3 letras">
+        <p class="teclado so-pc">Digite no teclado ou use <span class="k k-d">✚</span> · <span class="k k-a">A</span> avança e salva</p>
+        <button class="btn primario" id="bt-confirmar">Salvar</button>
+        <p class="status" id="auto-salva"></p>
+      </div>
       <dl class="resumo" id="fim-resumo"></dl>
       <p class="ciencia" id="fim-licao"></p>
-      <div class="linha-botoes">
-        <button class="btn primario" data-nav id="bt-salvar">Salvar no ranking</button>
-        <button class="btn" data-nav id="bt-denovo">Jogar de novo</button>
-        <button class="btn" data-nav data-back id="bt-fim-menu">Menu</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- INICIAIS -->
-  <section class="tela rolavel centro" id="nome" hidden>
-    <div class="painel" style="text-align:center">
-      <p class="eyebrow">Ranking</p>
-      <h2>Suas iniciais</h2>
-      <p class="so-pc teclado">✚ cima e baixo trocam a letra, esquerda e direita trocam a casa. <span class="k k-a">A</span> confirma.</p>
-      <div class="iniciais" id="iniciais"></div>
-      <div class="linha-botoes" style="justify-content:center">
-        <button class="btn primario" id="bt-confirmar">Confirmar</button>
-        <button class="btn" id="bt-nome-voltar">Voltar</button>
-      </div>
     </div>
   </section>
 
@@ -369,23 +400,12 @@ body.toque #hud .h small{font-size:.6rem}
       <div style="overflow-x:auto"><table class="tabela"><tbody id="rank-corpo"></tbody></table></div>
       <p class="status" id="rank-status"></p>
       <div class="linha-botoes">
-        <button class="btn" data-nav data-back id="bt-rank-voltar">Menu</button>
+        <button class="btn primario" data-nav id="bt-rank-denovo">Jogar de novo</button>
+        <button class="btn" data-nav data-back id="bt-rank-voltar">Outros jogos</button>
       </div>
     </div>
   </section>
 
-  <!-- QR -->
-  <section class="tela rolavel centro" id="qr" hidden>
-    <div class="painel" style="text-align:center">
-      <p class="eyebrow">Jogue no celular</p>
-      <h2>Aponte a câmera pro código</h2>
-      <div class="qr-grande" id="qr-grande"></div>
-      <p class="teclado" id="qr-link"></p>
-      <div class="linha-botoes" style="justify-content:center">
-        <button class="btn" data-nav data-back id="bt-qr-voltar">Voltar</button>
-      </div>
-    </div>
-  </section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -434,13 +454,20 @@ function som(tipo) {
 
 /* ================= ENTRADA (teclado, controle, toque) ================= */
 const Input = {
-  kb: {}, touch: {}, held: {}, prev: {}, pressed: {}, ativoEm: performance.now(), padOn: false,
+  kb: {}, tap: {}, touch: {}, held: {}, prev: {}, pressed: {}, ativoEm: performance.now(), padOn: false,
   KEYS: { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
     Space: 'a', Enter: 'a', KeyZ: 'a', KeyJ: 'a', KeyX: 'b', KeyK: 'b', Backspace: 'b', Escape: 'start', KeyP: 'start' },
   NOMES: ['left', 'right', 'up', 'down', 'a', 'b', 'start'],
   init() {
-    addEventListener('keydown', e => { const k = this.KEYS[e.code]; if (k) { e.preventDefault(); this.kb[k] = true; } });
-    addEventListener('keyup', e => { const k = this.KEYS[e.code]; if (k) this.kb[k] = false; });
+    addEventListener('keydown', e => {
+      if (e.target && e.target.tagName === 'INPUT') return;
+      if (Telas.atual === 'fim' && !Ultimo.salvo && !e.ctrlKey && !e.metaKey) {
+        if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); this.ativoEm = performance.now(); Nome.digita(e.key.toUpperCase()); return; }
+        if (e.code === 'Backspace') { e.preventDefault(); this.ativoEm = performance.now(); Nome.apaga(); return; }
+      }
+      const k = this.KEYS[e.code]; if (k) { e.preventDefault(); this.kb[k] = true; if (!e.repeat) this.tap[k] = true; }
+    });
+    addEventListener('keyup', e => { if (e.target && e.target.tagName === 'INPUT') return; const k = this.KEYS[e.code]; if (k) this.kb[k] = false; });
     addEventListener('blur', () => { this.kb = {}; this.touch = {}; });
     addEventListener('pointerdown', () => { this.ativoEm = performance.now(); }, true);
   },
@@ -461,13 +488,14 @@ const Input = {
       if (b(9) || b(8)) pad.start = 1;
     }
     for (const n of this.NOMES) {
-      const h = !!(this.kb[n] || pad[n] || this.touch[n]);
+      const h = !!(this.kb[n] || pad[n] || this.touch[n] || this.tap[n]);
       this.pressed[n] = h && !this.prev[n];
       this.held[n] = h; this.prev[n] = h;
       if (this.pressed[n]) this.ativoEm = performance.now();
     }
+    this.tap = {};
   },
-  limpar() { this.kb = {}; this.touch = {}; document.querySelectorAll('#toque button.on').forEach(b => b.classList.remove('on')); }
+  limpar() { this.kb = {}; this.tap = {}; this.touch = {}; document.querySelectorAll('#toque button.on').forEach(b => b.classList.remove('on')); }
 };
 
 /* ================= TELAS E NAVEGAÇÃO ================= */
@@ -1150,6 +1178,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && Tel
 
 /* ================= FIM DE PARTIDA ================= */
 const Ultimo = { jogo: null, pontos: 0, salvo: false, nome: null };
+const AUTO_SALVA = 30;
 function terminar() {
   const g = Jogo.g; som('fim');
   Object.assign(Ultimo, { jogo: Jogo.id, pontos: Math.max(0, Math.round(g.pontos)), salvo: false, nome: null });
@@ -1158,44 +1187,62 @@ function terminar() {
   $('#fim-pontos').textContent = Ultimo.pontos.toLocaleString('pt-BR');
   $('#fim-resumo').innerHTML = g.resumo().map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
   $('#fim-licao').textContent = g.licao();
-  $('#bt-salvar').hidden = false;
   Jogo.g = null;
+  Nome.preparar();
   Telas.show('fim');
 }
 
-/* ================= INICIAIS ================= */
+/* ================= NOME (3 letras, salva sozinho) ================= */
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const Nome = {
-  l: ls.get('solo_iniciais', ['A', 'A', 'A']), slot: 0,
-  abrir() { this.slot = 0; this.render(); Telas.show('nome'); },
+  l: ls.get('solo_iniciais', ['A', 'A', 'A']), slot: 0, desde: 0, seg: -1,
+  preparar() {
+    this.slot = 0; this.desde = performance.now(); this.seg = -1; this.render();
+    const inp = $('#nome-input'); inp.value = ''; inp.placeholder = this.l.join('');
+  },
   muda(i, d) { const p = LETRAS.indexOf(this.l[i]); this.l[i] = LETRAS[(p + d + 26) % 26]; this.slot = i; som('nav'); this.render(); },
+  digita(c) { this.l[this.slot] = c; som('nav'); if (this.slot < 2) this.slot++; this.render(); },
+  apaga() { if (this.slot > 0) this.slot--; som('nav'); this.render(); },
   render() {
+    this.seg = -1;
     $('#iniciais').innerHTML = this.l.map((c, i) => `<div class="slot${i === this.slot ? ' ativo' : ''}">
-      <button class="btn" data-i="${i}" data-d="-1" aria-label="Letra anterior">▲</button>
+      <button class="btn" tabindex="-1" data-i="${i}" data-d="-1" aria-label="Letra anterior">▲</button>
       <div class="letra">${c}</div>
-      <button class="btn" data-i="${i}" data-d="1" aria-label="Próxima letra">▼</button></div>`).join('');
+      <button class="btn" tabindex="-1" data-i="${i}" data-d="1" aria-label="Próxima letra">▼</button></div>`).join('');
   },
   handle() {
+    if (Ultimo.salvo || performance.now() - this.desde < 700) return;
     const p = Input.pressed;
     if (p.up) this.muda(this.slot, -1);
     if (p.down) this.muda(this.slot, 1);
     if (p.left) { this.slot = Math.max(0, this.slot - 1); som('nav'); this.render(); }
     if (p.right) { this.slot = Math.min(2, this.slot + 1); som('nav'); this.render(); }
-    if (p.a) { if (this.slot < 2) { this.slot++; som('nav'); this.render(); } else this.confirmar(); }
-    if (p.b) Telas.show('fim');
+    if (p.a || p.start) { if (this.slot < 2 && !p.start) { this.slot++; som('nav'); this.render(); } else this.confirmar(); }
   },
-  async confirmar() {
+  contagem(parado) {
+    if (Ultimo.salvo) return;
+    const rest = Math.max(0, Math.ceil(AUTO_SALVA - parado / 1000));
+    if (rest !== this.seg) { this.seg = rest; $('#auto-salva').textContent = `Salva sozinho em ${rest} s como ${this.l.join('')}`; }
+    if (rest <= 0) this.confirmar();
+  },
+  confirmar() {
     if (Ultimo.salvo) return;
     Ultimo.salvo = true; Ultimo.nome = this.l.join(''); ls.set('solo_iniciais', this.l);
+    try { $('#nome-input').blur(); } catch (e) {}
     som('ok');
     Ranking.enviar({ jogo: Ultimo.jogo, nome: Ultimo.nome, pontos: Ultimo.pontos, dispositivo: DISP });
-    $('#bt-salvar').hidden = true;
     Pesquisa.oferecer();
   }
 };
 $('#iniciais').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) Nome.muda(+b.dataset.i, +b.dataset.d); });
 $('#bt-confirmar').addEventListener('click', () => Nome.confirmar());
-$('#bt-nome-voltar').addEventListener('click', () => Telas.show('fim'));
+$('#nome-input').addEventListener('input', e => {
+  const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+  e.target.value = v; Input.ativoEm = performance.now();
+  const base = (ls.get('solo_iniciais', ['A', 'A', 'A'])).join('');
+  Nome.l = (v + base.slice(v.length)).split(''); Nome.seg = -1;
+});
+$('#nome-input').addEventListener('keydown', e => { Input.ativoEm = performance.now(); if (e.key === 'Enter') { e.preventDefault(); Nome.confirmar(); } });
 
 /* ================= REDE (Supabase) ================= */
 const Rede = {
@@ -1315,18 +1362,30 @@ async function renderRanking() {
     : 'Sem internet agora: mostrando o último ranking salvo.';
 }
 document.querySelectorAll('.aba').forEach(b => b.addEventListener('click', () => { abaRank = b.dataset.aba; renderRanking(); }));
-$('#bt-rank-voltar').addEventListener('click', irMenu);
+$('#bt-rank-voltar').addEventListener('click', irJogos);
+$('#bt-rank-denovo').addEventListener('click', () => { if (Ultimo.jogo) { Jogo.id = Ultimo.jogo; Jogo.iniciar(); } else irJogos(); });
 
-/* ================= MENU ================= */
-async function atualizarRecordes() {
-  const blocos = await Promise.all(Object.keys(JOGOS).map(async j => {
-    const top = await Ranking.top(j, 3);
-    return `<div class="rec-jogo"><h3>${esc(JOGOS[j].nome)}</h3>${top.length ? top.map((s, i) => `<div class="rec-l"><span>${i + 1}. ${esc(s.nome)}</span><span class="num">${Number(s.pontos).toLocaleString('pt-BR')}</span></div>`).join('') : '<p class="vazio">Sem pontuação ainda</p>'}</div>`;
+/* ================= PLACAR E MENU ================= */
+const HOME = TOQUE ? 'menu' : 'placar';
+const SPR_JOGO = { descarte: 'pilha', plataforma: 'jog', fito: 'gir' };
+async function atualizarPlacar() {
+  const cols = await Promise.all(Object.keys(JOGOS).map(async j => {
+    const top = await Ranking.top(j, 5);
+    const linhas = [];
+    for (let i = 0; i < 5; i++) {
+      const s = top[i];
+      linhas.push(s ? `<li class="${i === 0 ? 'ouro' : ''}"><span class="pos">${i + 1}º</span><span class="nm">${esc(s.nome)}</span><span class="pt">${Number(s.pontos).toLocaleString('pt-BR')}</span></li>`
+        : `<li class="vago"><span class="pos">${i + 1}º</span><span class="nm">---</span><span class="pt">0</span></li>`);
+    }
+    const img = SPR[SPR_JOGO[j]] ? SPR[SPR_JOGO[j]].toDataURL() : '';
+    return `<div class="hs-col"><div class="hs-cab"><img alt="" src="${img}"><h3>${esc(JOGOS[j].nome)}</h3></div><ol class="hs-lista">${linhas.join('')}</ol></div>`;
   }));
-  $('#recordes').innerHTML = blocos.join('');
-  $('#rec-status').textContent = !Rede.ok ? 'Ranking deste aparelho.' : Ranking.online ? 'Ao vivo: PC e celulares.' : 'Sem internet: último ranking salvo.';
+  $('#hs').innerHTML = cols.join('');
+  $('#hs-status').textContent = !Rede.ok ? 'Recordes deste aparelho.' : Ranking.online ? 'Ao vivo: PC e celulares juntos.' : 'Sem internet: mostrando os últimos recordes salvos.';
 }
-function irMenu() { Jogo.g = null; Telas.show('menu'); atualizarRecordes(); }
+function irPlacar() { Jogo.g = null; Telas.show('placar'); atualizarPlacar(); }
+function irJogos() { Jogo.g = null; Telas.show('menu'); }
+function irMenu() { if (HOME === 'placar') irPlacar(); else irJogos(); }
 function urlSite() {
   if (CONFIG.SITE_URL) return CONFIG.SITE_URL;
   if (/^https?:/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname)) return location.origin + location.pathname;
@@ -1337,22 +1396,15 @@ function qrSvg(url) {
   try { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); } catch (e) { return ''; }
 }
 document.querySelectorAll('.carta').forEach(c => c.addEventListener('click', () => Jogo.abrirInstr(c.dataset.jogo)));
-$('#bt-rank').addEventListener('click', () => abrirRanking(abaRank));
-$('#bt-qr').addEventListener('click', () => {
-  const u = urlSite();
-  $('#qr-grande').innerHTML = qrSvg(u) || '<p style="color:#17130e">Coloque o jogo online pra gerar o QR code.</p>';
-  $('#qr-link').textContent = u; Telas.show('qr');
-});
-$('#bt-qr-voltar').addEventListener('click', irMenu);
-$('#bt-tela').addEventListener('click', () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen().catch(() => {}); else if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); });
+$('#bt-jogar').addEventListener('click', irJogos);
+$('#bt-recordes').addEventListener('click', irPlacar);
+document.querySelectorAll('[data-tela-cheia]').forEach(b => b.addEventListener('click', () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen().catch(() => {}); else if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); }));
 $('#bt-comecar').addEventListener('click', () => Jogo.iniciar());
-$('#bt-instr-voltar').addEventListener('click', irMenu);
+$('#bt-instr-voltar').addEventListener('click', irJogos);
 $('#bt-continuar').addEventListener('click', () => Jogo.pausar(false));
-$('#bt-sair').addEventListener('click', () => { Jogo.pausar(false); irMenu(); });
+$('#bt-sair').addEventListener('click', () => { Jogo.pausar(false); irJogos(); });
 $('#hud').addEventListener('click', e => { if (e.target.closest('#bt-pausa')) Jogo.pausar(true); });
-$('#bt-salvar').addEventListener('click', () => Nome.abrir());
-$('#bt-denovo').addEventListener('click', () => Jogo.iniciar());
-$('#bt-fim-menu').addEventListener('click', irMenu);
+
 
 /* toque nos botões virtuais */
 document.querySelectorAll('#toque button').forEach(b => {
@@ -1375,12 +1427,13 @@ function laco(t) {
   const dt = Math.min(1 / 30, Math.max(0, (t - ultimoT) / 1000)); ultimoT = t;
   Input.update();
   if (Telas.atual === 'jogo') Jogo.frame(dt);
-  else if (Telas.atual === 'nome') Nome.handle();
-  else Nav.handle();
+  else if (Telas.atual === 'fim') Nome.handle();
+  else { if (Telas.atual === 'placar' && Input.pressed.start) irJogos(); else Nav.handle(); }
   const parado = performance.now() - Input.ativoEm;
-  if (Telas.atual !== 'menu' && Telas.atual !== 'jogo' && parado > 45000) irMenu();
+  if (Telas.atual === 'fim') Nome.contagem(parado);
+  else if (Telas.atual !== HOME && Telas.atual !== 'jogo' && parado > 45000) irMenu();
   if (Telas.atual === 'jogo' && Jogo.pausado && parado > 60000) { Jogo.pausar(false); irMenu(); }
-  if (Telas.atual === 'menu' && t - ultimoRec > 20000) { ultimoRec = t; atualizarRecordes(); }
+  if (Telas.atual === 'placar' && t - ultimoRec > 20000) { ultimoRec = t; atualizarPlacar(); }
   if (Telas.atual === 'menu') { const ps = $('#pad-status'); const txtPad = Input.padOn ? 'Controle conectado' : 'Teclado: setas, Espaço e X'; if (ps.textContent !== txtPad) { ps.textContent = txtPad; ps.classList.toggle('pad-ok', Input.padOn); } }
   requestAnimationFrame(laco);
 }
@@ -1388,13 +1441,13 @@ function laco(t) {
 /* ================= INÍCIO ================= */
 Input.init();
 iniciarSprites();
-(function montarQrMenu() {
+(function montarQr() {
   const u = urlSite(), svg = qrSvg(u);
-  if (svg && !TOQUE) { $('#qr-mini').innerHTML = svg; $('#qr-url').textContent = u.replace(/^https?:\/\//, ''); $('#qr-box').hidden = false; }
+  if (svg && !TOQUE) { $('#qr-mini').innerHTML = svg; $('#qr-url').textContent = u.replace(/^https?:\/\//, ''); $('#qr-lado').hidden = false; }
+  else $('#placar-grid').classList.add('sem-qr');
 })();
 Fila.enviar();
-atualizarRecordes();
-Telas.show('menu');
+if (HOME === 'placar') irPlacar(); else { irJogos(); atualizarPlacar(); }
 requestAnimationFrame(laco);
 </script>
 </body>
