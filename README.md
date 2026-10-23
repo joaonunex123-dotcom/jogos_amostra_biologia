@@ -7,3 +7,8 @@ Três jogos rápidos sobre metais pesados no solo urbano, feitos para o stand da
 - **Jardim Limpador**: estratégia de 90 s sobre fitorremediação.
 
 Joga no PC (controle de Xbox ou teclado) e no celular (toque). Ranking compartilhado e questionário via Supabase (`supabase.sql`).
+
+## Créditos de arte
+
+- Cenário, personagens e inimigos da Patrulha Barueri, decoração do Jardim e do Descarte: **Platformer Art Pixel Redux**, de [Kenney](https://www.kenney.nl), licença [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+- Itens de lixo, girassol, vetiver e lixeiras: desenhados para este projeto.
