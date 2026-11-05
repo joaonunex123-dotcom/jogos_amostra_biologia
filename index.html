@@ -709,11 +709,42 @@ function tingir(de, para, hex) {
   for (let i = 0; i < px.length; i += 4) { if (!px[i + 3]) continue; const l = (.3 * px[i] + .59 * px[i + 1] + .11 * px[i + 2]) / max, f = .3 + .85 * l; for (let k = 0; k < 3; k++) px[i + k] = Math.min(255, cor[k] * f + (l > .97 ? 40 : 0)); }
   x.putImageData(d, 0, 0); SPR[para] = c2;
 }
+/* inimigo "bravo": troca a cara por olhos vermelhos, sobrancelha franzida e dentes; contorno escuro + brilho vermelho */
+const CARA_BRAVA = {
+  fant: ['B.........B', '.BB.....BB.', '..BBB.BBB..', '.WRR...RRW.', '.WRR...RRW.', '...........', '..DDDDDDD..', '..DWDWDWD..'],
+  slime: ['B.......B', '.BB...BB.', '.WR...RW.', '.........', '..DWDWD..']
+};
+function bravo(nome, tipo) {
+  const o = SPR[nome]; if (!o) return;
+  const w = o.width, h = o.height, P = 2, c2 = document.createElement('canvas'); c2.width = w + P * 2; c2.height = h + P * 2;
+  const x = c2.getContext('2d'); x.drawImage(o, P, P);
+  const d = x.getImageData(0, 0, c2.width, c2.height), px = d.data, CW = c2.width, CH = c2.height;
+  const a = (i, j) => i >= 0 && j >= 0 && i < CW && j < CH && px[(j * CW + i) * 4 + 3] > 0;
+  let x0 = CW, y0 = CH, x1 = 0, y1 = 0;
+  for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) if (a(i, j)) { x0 = Math.min(x0, i); y0 = Math.min(y0, j); x1 = Math.max(x1, i); y1 = Math.max(y1, j); }
+  const cx = Math.round((x0 + x1) / 2), conta = {};
+  for (let q = 0; q < px.length; q += 4) if (px[q + 3]) { const kk = px[q] + ',' + px[q + 1] + ',' + px[q + 2]; conta[kk] = (conta[kk] || 0) + 1; }
+  const corpo = Object.keys(conta).sort((u, v) => conta[v] - conta[u])[0].split(',').map(Number);
+  const cara = CARA_BRAVA[tipo], fw = cara[0].length, fx = cx - (fw >> 1), fy = tipo === 'fant' ? y0 + 4 : y0 + (y1 - y0 >= 9 ? 2 : 1);
+  // apaga a cara antiga na faixa do rosto
+  for (let j = fy - 1; j < fy + cara.length + 1; j++) for (let i = x0 + 1; i < x1; i++) if (a(i, j) && a(i - 1, j) && a(i + 1, j)) { const q = (j * CW + i) * 4; px[q] = corpo[0]; px[q + 1] = corpo[1]; px[q + 2] = corpo[2]; }
+  const COR = { B: [26, 10, 20], W: [255, 255, 255], R: [230, 36, 46], D: [58, 11, 24] };
+  cara.forEach((l, j) => [...l].forEach((ch, i) => { const c = COR[ch]; if (!c || !a(fx + i, fy + j)) return; const q = ((fy + j) * CW + fx + i) * 4; px[q] = c[0]; px[q + 1] = c[1]; px[q + 2] = c[2]; }));
+  // contorno: 1 px escuro colado no corpo, 1 px vermelho translúcido por fora
+  const borda = [];
+  for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) if (!a(i, j)) {
+    let n1 = false, n2 = false;
+    for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) if (a(i + di, j + dj)) { if (Math.abs(di) <= 1 && Math.abs(dj) <= 1 && Math.abs(di) + Math.abs(dj) === 1) n1 = true; else n2 = true; }
+    if (n1) borda.push([i, j, 26, 10, 20, 255]); else if (n2) borda.push([i, j, 230, 36, 46, 150]);
+  }
+  for (const [i, j, r, gg, bb, al] of borda) { const q = (j * CW + i) * 4; px[q] = r; px[q + 1] = gg; px[q + 2] = bb; px[q + 3] = al; }
+  x.putImageData(d, 0, 0); SPR[nome] = c2;
+}
 const kimg = new Image();
 kimg.onload = () => {
   for (const k in KMAP) cortarK(k, KMAP[k][0], KMAP[k][1], 1, 1);
   for (const k in KMULTI) cortarK(k, ...KMULTI[k]);
-  for (const m in METAIS) for (const b of ['slime1', 'slime2', 'fant1', 'fant2']) tingir(b, b + '_' + m, METAIS[m].cor);
+  for (const m in METAIS) for (const b of ['slime1', 'slime2', 'fant1', 'fant2']) { tingir(b, b + '_' + m, METAIS[m].cor); bravo(b + '_' + m, b.startsWith('fant') ? 'fant' : 'slime'); }
   kenneyOk = true;
   document.querySelectorAll('img[data-spr]').forEach(img => { const s2 = SPR[img.dataset.spr]; if (s2) img.src = s2.toDataURL(); });
   try { if (Telas.atual === 'placar') atualizarPlacar(); } catch (e) {}
@@ -1477,9 +1508,11 @@ function criarPlataforma() {
     for (const e of l.inim) {
       if (!e.vivo) continue; const x = e.x - cam; if (x < -30 || x > W + 30) continue;
       const q = Math.floor(e.t * 4) % 2 + 1;
-      if (e.tipo === 'anda') spr(ctx, 'slime' + q + '_' + e.metal, Math.round(x - 1), Math.round(e.y - 8), 1, e.vx > 0);
-      else spr(ctx, 'fant' + q + '_' + e.metal, Math.round(x - 2), Math.round(e.y - 2), 1, Math.cos(e.t * .9) > 0);
-      txt(ctx, e.metal, x + 9, e.y - 14, { tam: 9, al: 'center', cor: '#ffffff' });
+      if (e.tipo === 'anda') spr(ctx, 'slime' + q + '_' + e.metal, Math.round(x - 3), Math.round(e.y - 10), 1, e.vx > 0);
+      else spr(ctx, 'fant' + q + '_' + e.metal, Math.round(x - 4), Math.round(e.y - 4), 1, Math.cos(e.t * .9) > 0);
+      const ty = Math.round(e.y - 17), tx = Math.round(x + 9);
+      ctx.fillStyle = '#1a0a14'; ctx.fillRect(tx - 9, ty - 1, 18, 11); ctx.fillStyle = '#c4202a'; ctx.fillRect(tx - 8, ty, 16, 9);
+      txt(ctx, e.metal, tx, ty, { tam: 9, al: 'center', cor: '#ffffff', sombra: false });
     }
     for (const sd of g.sementes) spr(ctx, 'semente_g', Math.round(sd.x - cam), Math.round(sd.y), 1);
     const p = g.p;
@@ -1531,7 +1564,7 @@ const JOGOS = {
     passos: [
       ['et', 'São <b>3 fases</b>: Praça, Avenida e Zona Industrial. Chegue na <b>bandeira laranja</b> no fim de cada uma.'],
       ['garrafa', 'Encoste no <b>lixo</b> pra recolher. No fim da fase, passe pelas <b>3 lixeiras</b> pra entregar. Item perigoso não entregue tira pontos.'],
-      ['slime1_Pb', 'Gosmas e fantasmas são <b>metais pesados</b>. Pule em cima deles ou acerte uma semente. Encostar tira 1 das suas <b>3 vidas</b>.'],
+      ['slime1_Pb', 'Gosmas e fantasmas de <b>cara brava</b> com <b style="color:#e8443a">contorno vermelho</b> são <b>metais pesados</b>. Pule em cima deles ou acerte uma semente. Encostar tira 1 das suas <b>3 vidas</b>.'],
       ['semente_g', 'Pegue <b>sementes</b> pelo caminho e jogue com B. Ao cair no chão, ela vira uma <b>muda de árvore</b>. As árvores plantadas contam no final.'],
       ['tabua_e', 'As fases <b>mudam a cada partida</b>. Na fábrica tem <b>valas tóxicas</b>. Use as <b>plataformas que se mexem</b> e os elevadores pra atravessar.'],
       ['flag_l1', 'Quanto <b>mais rápido</b> terminar, mais pontos: cada segundo que sobra vale 60. A bandeira verde no meio da fase é onde você volta se morrer.']
